@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imperial Terminal — Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#FFD307;
+    --gold-bright:#FEE141;
+    --white:#FFFFFF;
+    --grey:#D9D9D9;
+    --grey-mid:#757575;
+    --black:#000000;
+    --panel-bg:#0a0a0a;
+    --outer-bg:#1a1a1a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--black);
+    font-family:'JetBrains Mono', monospace;
+    color:var(--white);
+    min-height:100vh;
+    margin:0;
+    padding:0;
+  }
+  .frame{
+    background:var(--black);
+    width:100%;
+    min-height:100vh;
+    padding:20px 32px;
+    border-radius:0;
+  }
+
+  /* ===== TOP NAV ===== */
+  .navbar{
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    border-bottom:1px solid #2a2a2a;
+    margin-bottom:20px;
+  }
+  .navbar a{
+    color:var(--white);
+    text-decoration:none;
+    text-align:center;
+    padding:14px 0;
+    font-size:13px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    position:relative;
+  }
+  .navbar a:not(:last-child)::after{
+    content:"";
+    position:absolute;
+    right:0;
+    top:20%;
+    height:60%;
+    width:1px;
+    background:#2a2a2a;
+    transform:skewX(-20deg);
+  }
+  .navbar a.active{
+    background:var(--white);
+    color:var(--black);
+    font-weight:700;
+  }
+
+  /* ===== MAIN GRID ===== */
+  .layout{
+    display:grid;
+    grid-template-columns: 220px 1fr 220px;
+    gap:32px;
+  }
+
+  /* ===== LEFT PANEL ===== */
+  .left-panel{
+    border-right:1px solid #262626;
+    padding-right:24px;
+  }
+  .sys-header{
+    display:flex;
+    justify-content:space-between;
+    color:var(--grey-mid);
+    font-size:11px;
+    letter-spacing:1px;
+    border-top:1px solid #333;
+    padding-top:6px;
+    margin-bottom:6px;
+  }
+  .sys-header span:first-child::before{ content:"|"; margin-right:2px; }
+  .clock{
+    color:var(--gold);
+    font-size:30px;
+    font-weight:600;
+    letter-spacing:2px;
+    margin:2px 0 10px 0;
+  }
+  .tickrow{
+    display:flex;
+    gap:2px;
+    margin-bottom:18px;
+  }
+  .tick{
+    width:3px;
+    height:8px;
+    background:#333;
+  }
+  .tick.on{ background:var(--gold); }
+
+  .meta-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    font-size:10px;
+    margin-bottom:18px;
+    row-gap:4px;
+  }
+  .meta-grid .label{ color:var(--grey-mid); letter-spacing:0.5px; }
+  .meta-grid .val{ color:var(--white); }
+
+  .section-label{
+    font-size:11px;
+    letter-spacing:0.5px;
+    color:var(--white);
+    margin-bottom:6px;
+  }
+
+  .traffic-box{
+    height:80px;
+    border:1px solid #262626;
+    margin-bottom:16px;
+    position:relative;
+  }
+
+  .net-status{ margin-bottom:16px; }
+  .net-status .row1{
+    display:flex;
+    justify-content:space-between;
+    font-size:10px;
+    color:var(--grey-mid);
+    margin-bottom:4px;
+  }
+  .net-status .row2{
+    display:flex;
+    justify-content:space-between;
+    font-size:11px;
+  }
+  .net-status .row2 .state{ color:var(--white); }
+  .net-status .row2 .ip{ color:var(--grey-mid); }
+  .net-status .row2 .ping{ color:var(--white); }
+
+  .memory-box{
+    display:flex;
+    align-items:flex-end;
+    gap:2px;
+    height:60px;
+    margin-bottom:18px;
+  }
+  .mbar{
+    flex:1;
+    background:#2b2b2b;
+  }
+  .mbar.gold{ background:var(--gold); }
+
+  .rank-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:9.5px;
+  }
+  .rank-table th{
+    text-align:left;
+    color:var(--grey-mid);
+    font-weight:400;
+    padding-bottom:4px;
+    border-bottom:1px solid #262626;
+  }
+  .rank-table td{
+    padding:2px 0;
+    color:var(--white);
+  }
+  .rank-table td.dim{ color:var(--grey-mid); }
+
+  /* ===== CENTER PANEL ===== */
+  .center-panel{
+    border-right:1px solid #262626;
+    padding-right:24px;
+  }
+  .headline{
+    color:var(--gold);
+    font-size:19px;
+    font-weight:700;
+    letter-spacing:0.3px;
+    border-bottom:1px solid #333;
+    padding-bottom:10px;
+    margin:0 0 14px 0;
+  }
+  .headline .prefix{ color:var(--gold); }
+  .media-wrap{
+    position:relative;
+    width:100%;
+    aspect-ratio: 16/8.4;
+    background:#111;
+    overflow:hidden;
+    margin-bottom:10px;
+  }
+  .media-wrap img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    filter: sepia(1) saturate(3) hue-rotate(-10deg) brightness(0.85) contrast(1.05);
+  }
+  .play-btn{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.92);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .play-btn::after{
+    content:"";
+    border-left: 16px solid #111;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    margin-left:4px;
+  }
+  .caption{
+    font-size:11.5px;
+    font-style:italic;
+    color:#cfcfcf;
+    text-align:center;
+    line-height:1.5;
+    margin:0 0 16px 0;
+    padding:0 10px;
+  }
+  .caption .src{ font-style:normal; color:#9a9a9a; }
+
+  .log-label{
+    font-size:12px;
+    color:var(--grey);
+    letter-spacing:0.5px;
+    margin-bottom:6px;
+  }
+  .log-list{
+    display:flex;
+    flex-direction:column;
+  }
+  .log-row{
+    display:grid;
+    grid-template-columns: 40px 90px 1fr;
+    gap:12px;
+    font-size:10.5px;
+    padding:6px 8px;
+    color:var(--grey-mid);
+  }
+  .log-row.hot{
+    background:#161616;
+    color:var(--gold-bright);
+  }
+  .log-row.hot .time,
+  .log-row.hot .loc{ color:var(--gold-bright); }
+  .log-row .time{ color:#8a8a8a; }
+  .log-row .loc{ color:#c9c9c9; letter-spacing:0.5px; }
+  .log-row .msg{ color:inherit; }
+  .log-row.faded{ opacity:0.35; }
+
+  /* ===== RIGHT PANEL ===== */
+  .right-panel{}
+  .bounty-title{
+    font-size:20px;
+    letter-spacing:1px;
+    font-weight:600;
+    text-align:center;
+    margin:2px 0 18px 0;
+  }
+  .bounty-frame{
+    position:relative;
+    width:100%;
+    aspect-ratio:1/0.78;
+    margin-bottom:18px;
+  }
+  .bounty-frame svg{ width:100%; height:100%; display:block; }
+
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:6px;
+    margin-bottom:16px;
+  }
+  .stat-chip{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:26px;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:0.5px;
+    color:#111;
+  }
+  .stat-chip.gold{ background:var(--gold); }
+  .stat-chip.grey{ background:var(--grey); }
+
+  .ability-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .ability-btn{
+    position:relative;
+    height:34px;
+    background:#3a3a3a;
+    border:1px dashed var(--gold);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    letter-spacing:1px;
+    color:var(--white);
+  }
+  .ability-btn::before{
+    content:"";
+    position:absolute;
+    left:6px;
+    top:50%;
+    transform:translateY(-50%);
+    width:4px;
+    height:4px;
+    background:var(--gold);
+    border-radius:50%;
+  }
+
+  @media (max-width: 980px){
+    .layout{ grid-template-columns:1fr; }
+    .left-panel, .center-panel{ border-right:none; border-bottom:1px solid #262626; padding-right:0; padding-bottom:20px; margin-bottom:20px; }
+    .navbar{ grid-template-columns: repeat(5, 1fr); font-size:10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+  <div class="navbar">
+    <a href="#" class="active">Home</a>
+    <a href="#">Services</a>
+    <a href="#">Admin</a>
+    <a href="#">Military</a>
+    <a href="#">Report</a>
+  </div>
+
+  <div class="layout">
+
+    <!-- LEFT: SYSTEM PANEL -->
+    <div class="left-panel">
+      <div class="sys-header">
+        <span>SYSTEM</span>
+        <span>PANEL</span>
+      </div>
+      <div class="clock" id="live-time">10:27:59</div>
+      <div class="tickrow" id="tickrow"></div>
+
+      <div class="meta-grid">
+        <div class="label">DATE</div>
+        <div class="label">UPTIME</div>
+        <div class="label">TYPE</div>
+        <div class="label">POWER</div>
+        <div class="val">17SEP</div>
+        <div class="val">09d36:00</div>
+        <div class="val">HNET</div>
+        <div class="val">ON</div>
+      </div>
+
+      <div class="section-label">NETWORK TRAFFIC</div>
+      <div class="traffic-box">
+        <canvas id="trafficCanvas" style="width:100%;height:100%;display:block;"></canvas>
+      </div>
+
+      <div class="net-status">
+        <div class="row1">
+          <span>NETWORK STATUS</span>
+          <span>[Interface: wlp4l]</span>
+        </div>
+        <div class="row2">
+          <span class="state">STATE<br><span style="color:var(--white)">ACTIVE</span></span>
+          <span class="ip">IP<br>--</span>
+          <span class="ping">PING<br>482ms</span>
+        </div>
+      </div>
+
+      <div class="section-label">MEMORY USAGE</div>
+      <div class="memory-box" id="memoryBox"></div>
+
+      <div class="section-label" style="margin-top:4px;">CITIZEN RANK</div>
+      <table class="rank-table">
+        <thead>
+          <tr><th>NAME</th><th>VOLUNTEERED</th><th>REPORTS</th></tr>
+        </thead>
+        <tbody id="rankBody"></tbody>
+      </table>
+    </div>
+
+    <!-- CENTER: NEWS FEED -->
+    <div class="center-panel">
+      <h1 class="headline">BREAKING NEWS: IMPERIAL FORCES RESTORE ORDER IN THE OUTER RIM</h1>
+
+      <div class="media-wrap">
+        <img src="placeholder-broadcast.jpg" alt="Broadcast still placeholder">
+        <div class="play-btn"></div>
+      </div>
+
+      <p class="caption">
+        "Following coordinated operations across three sectors, Imperial forces have successfully
+        neutralized remaining rebellion insurgencies..." <span class="src">- HoloNet Exclusive Weekly</span>
+      </p>
+
+      <div class="log-label">// LATEST TRANSMISSIONS LOG:</div>
+      <div class="log-list" id="logList"></div>
+    </div>
+
+    <!-- RIGHT: BOUNTY PANEL -->
+    <div class="right-panel">
+      <div class="bounty-title">BOUNTY</div>
+
+      <div class="bounty-frame">
+        <svg viewBox="0 0 220 172" xmlns="http://www.w3.org/2000/svg">
+          <!-- corner brackets -->
+          <path d="M14 6 L4 6 L4 16" stroke="#FFD307" stroke-width="2" fill="none"/>
+          <path d="M206 6 L216 6 L216 16" stroke="#FFD307" stroke-width="2" fill="none"/>
+          <!-- top gold accent line -->
+          <line x1="120" y1="6" x2="212" y2="6" stroke="#FFD307" stroke-width="2"/>
+          <!-- main frame -->
+          <rect x="4" y="4" width="212" height="150" fill="#000" stroke="#D9D9D9" stroke-width="1.5"/>
+          <!-- hazard stripe corner -->
+          <g clip-path="url(#hazardClip)">
+            <rect x="4" y="120" width="34" height="34" fill="#000"/>
+            <g>
+              <line x1="4" y1="154" x2="38" y2="120" stroke="#FFD307" stroke-width="4"/>
+              <line x1="4" y1="144" x2="28" y2="120" stroke="#FFD307" stroke-width="4"/>
+              <line x1="4" y1="134" x2="18" y2="120" stroke="#FFD307" stroke-width="4"/>
+              <line x1="14" y1="154" x2="38" y2="130" stroke="#FFD307" stroke-width="4"/>
+              <line x1="24" y1="154" x2="38" y2="140" stroke="#FFD307" stroke-width="4"/>
+            </g>
+          </g>
+          <defs>
+            <clipPath id="hazardClip">
+              <rect x="4" y="120" width="34" height="34"/>
+            </clipPath>
+          </defs>
+        </svg>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-chip gold">HUD</div>
+        <div class="stat-chip grey">IDI</div>
+        <div class="stat-chip grey">IDI</div>
+        <div class="stat-chip gold">BMI</div>
+        <div class="stat-chip grey">CAT</div>
+        <div class="stat-chip grey">CAT</div>
+        <div class="stat-chip gold">CAP</div>
+        <div class="stat-chip grey">LVL</div>
+        <div class="stat-chip grey">LVL</div>
+      </div>
+
+      <div class="ability-grid">
+        <div class="ability-btn">ABILITY1</div>
+        <div class="ability-btn">ABILITY1</div>
+        <div class="ability-btn">ABILITY1</div>
+        <div class="ability-btn">ABILITY1</div>
+        <div class="ability-btn">ABILITY1</div>
+        <div class="ability-btn">ABILITY1</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* live clock */
+function updateClock(){
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2,"0");
+  const m = now.getMinutes().toString().padStart(2,"0");
+  const s = now.getSeconds().toString().padStart(2,"0");
+  document.getElementById("live-time").textContent = `${h}:${m}:${s}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* tick row under clock */
+const tickrow = document.getElementById("tickrow");
+const tickCount = 60;
+for(let i=0;i<tickCount;i++){
+  const t = document.createElement("div");
+  t.className = "tick" + (i < 10 ? " on" : "");
+  tickrow.appendChild(t);
+}
+
+/* network traffic mini line chart */
+const trafficCanvas = document.getElementById("trafficCanvas");
+const tctx = trafficCanvas.getContext("2d");
+function resizeTraffic(){
+  trafficCanvas.width = trafficCanvas.offsetWidth;
+  trafficCanvas.height = trafficCanvas.offsetHeight;
+}
+resizeTraffic();
+let trafficData = Array(24).fill(0).map(()=>Math.random());
+function drawTraffic(){
+  const w = trafficCanvas.width, h = trafficCanvas.height;
+  tctx.clearRect(0,0,w,h);
+  tctx.strokeStyle = "#1e1e1e";
+  tctx.lineWidth = 1;
+  for(let i=1;i<4;i++){
+    tctx.beginPath();
+    tctx.moveTo(0, (h/4)*i);
+    tctx.lineTo(w, (h/4)*i);
+    tctx.stroke();
+  }
+  for(let i=1;i<6;i++){
+    tctx.beginPath();
+    tctx.moveTo((w/6)*i, 0);
+    tctx.lineTo((w/6)*i, h);
+    tctx.stroke();
+  }
+  trafficData.shift();
+  trafficData.push(Math.random());
+  tctx.beginPath();
+  tctx.strokeStyle = "#FFD307";
+  tctx.lineWidth = 1.5;
+  const step = w/trafficData.length;
+  trafficData.forEach((v,i)=>{
+    const x = i*step;
+    const y = h - (v*h*0.85) - h*0.05;
+    i===0 ? tctx.moveTo(x,y) : tctx.lineTo(x,y);
+  });
+  tctx.stroke();
+  requestAnimationFrame(drawTraffic);
+}
+drawTraffic();
+window.addEventListener("resize", resizeTraffic);
+
+/* memory usage bars */
+const memoryBox = document.getElementById("memoryBox");
+const barCount = 40;
+const bars = [];
+for(let i=0;i<barCount;i++){
+  const b = document.createElement("div");
+  b.className = "mbar" + (Math.random() > 0.75 ? " gold" : "");
+  b.style.height = (10 + Math.random()*90) + "%";
+  memoryBox.appendChild(b);
+  bars.push(b);
+}
+setInterval(()=>{
+  bars.forEach(b=>{
+    b.style.height = (10 + Math.random()*90) + "%";
+    b.className = "mbar" + (Math.random() > 0.8 ? " gold" : "");
+  });
+}, 1400);
+
+/* citizen rank table */
+const rankBody = document.getElementById("rankBody");
+for(let i=0;i<6;i++){
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>NAME</td><td class="dim">61D</td><td class="dim">107</td>`;
+  rankBody.appendChild(tr);
+}
+
+/* transmissions log */
+const logs = [
+  { time:"17:42", loc:"CORUSCANT", msg:"IMPERIAL SENATE APPROVES NEW SECURITY ACT...[more]", hot:true },
+  { time:"17:42", loc:"TATOOINE", msg:"CITIZEN REPORT LEADS TO ARREST ...[more]", hot:false },
+  { time:"17:42", loc:"CORUSCANT", msg:"JEDI SYMPATHIZER DETAINED FOLLOWING ATTEMPTED SABOTAGE...", hot:true },
+  { time:"17:42", loc:"CORUSCANT", msg:"IMPERIAL SENATE APPROVES NEW SECURITY ACT...[more]", hot:false, faded:true },
+  { time:"17:42", loc:"CORUSCANT", msg:"IMPERIAL SENATE APPROVES NEW SECURITY ACT...[more]", hot:false, faded:true },
+];
+const logList = document.getElementById("logList");
+logs.forEach(l=>{
+  const row = document.createElement("div");
+  row.className = "log-row" + (l.hot ? " hot" : "") + (l.faded ? " faded" : "");
+  row.innerHTML = `<span class="time">${l.time}</span><span class="loc">${l.loc}</span><span class="msg">${l.msg}</span>`;
+  logList.appendChild(row);
+});
+</script>
+
+</body>
+</html>
