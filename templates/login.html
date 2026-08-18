@@ -191,10 +191,12 @@
     const element = document.getElementById("flicker");
 
     function flicker() {
+        // Randomly choose how visible it is
         element.style.opacity = Math.random() > 0.25
         ? (0.7 + Math.random() * 0.3)
         : (0.1 + Math.random() * 0.4);
 
+        // Random delay before the next flicker
         const delay = 30 + Math.random() * 250;
 
         setTimeout(flicker, delay);

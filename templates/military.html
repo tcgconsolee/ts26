@@ -19,6 +19,7 @@
     --grey-dark: #262626;
     --black: #000000;
     
+    /* 52% White on Black */
     --border-dim: rgba(255, 255, 255, 0.52);
   }
   
@@ -43,6 +44,7 @@
     box-sizing: border-box;
   }
 
+  /* ===== MAIN GRID LAYOUT ===== */
   .layout {
     display: grid;
     grid-template-columns: 280px 1fr;
@@ -50,6 +52,7 @@
     align-items: stretch;
   }
 
+  /* ===== LEFT PANEL (SYSTEM) ===== */
   .left-panel {
     border-right: 1px solid var(--grey-dark);
     padding-right: 16px;
@@ -154,6 +157,7 @@
   .rank-table td { padding: 3px 0; color: var(--white); }
   .rank-table td.dim { color: var(--grey-mid); }
 
+  /* ===== RIGHT MAIN CONTENT AREA ===== */
   .main-content {
     display: flex;
     flex-direction: column;
@@ -162,6 +166,7 @@
     min-width: 0;
   }
 
+  /* ===== TOP NAVBAR ===== */
   .navbar {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -186,6 +191,7 @@
     z-index: 2;
   }
 
+  /* ===== ENCASING OUTER BOX FOR VOLUNTEER CARDS ===== */
   .cards-outer-panel {
     border: 1px solid var(--border-dim);
     background: #000;
@@ -193,12 +199,14 @@
     position: relative;
   }
 
+  /* ===== MILITARY CARDS ROW ===== */
   .cards-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 10px;
   }
 
+  /* VECTOR CARD WRAPPER */
   .mil-card-wrap {
     position: relative;
     width: 100%;
@@ -274,6 +282,7 @@
     color: var(--black);
   }
 
+  /* ===== LOWER DASHBOARD GRID ===== */
   .dashboard-grid {
     display: grid;
     grid-template-columns: 300px 1fr;
@@ -281,6 +290,7 @@
     align-items: stretch;
   }
 
+  /* RADAR BOX */
   .radar-box {
     border: 1px solid var(--border-dim);
     background: #030303;
@@ -307,6 +317,7 @@
     display: block;
   }
 
+  /* RIGHT STATS & ANNOUNCEMENTS */
   .stats-column {
     display: flex;
     flex-direction: column;
@@ -322,6 +333,7 @@
     gap: 10px;
   }
 
+  /* PANEL BOX GENERAL */
   .panel-box {
     border: 1px solid var(--border-dim);
     background: #050505;
@@ -350,6 +362,7 @@
     text-transform: uppercase;
   }
 
+  /* FLEET STATUS TABLE */
   .fleet-table {
     width: 100%;
     border-collapse: collapse;
@@ -365,6 +378,7 @@
     font-weight: 600;
   }
 
+  /* MILITARY OVERVIEW STATS */
   .overview-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -389,6 +403,7 @@
     margin-top: 2px;
   }
 
+  /* ANNOUNCEMENTS BOX */
   .announcements-box {
     border: 1px solid var(--border-dim);
     background: #050505;
@@ -434,6 +449,7 @@
 <div class="frame">
   <div class="layout">
 
+    <!-- LEFT PANEL: SYSTEM -->
     <div class="left-panel">
       <div>
         <div class="sys-header">
@@ -486,8 +502,10 @@
       </div>
     </div>
 
+    <!-- RIGHT PANEL: MILITARY COMMAND -->
     <div class="main-content">
       
+      <!-- TOP NAVIGATION -->
       <div class="navbar">
         <a href="{{ url_for('home') }}">Home</a>
         <a href="{{ url_for('services') }}">Services</a>
@@ -496,14 +514,17 @@
         <a href="{{ url_for('report') }}">Report</a>
       </div>
 
+      <!-- ENCASING PANEL BOX -->
       <div class="cards-outer-panel">
         <div class="corner-dot corner-tl"></div>
         <div class="corner-dot corner-tr"></div>
         <div class="corner-dot corner-bl"></div>
         <div class="corner-dot corner-br"></div>
 
+        <!-- CARDS ROW: 4 BRANCHES -->
         <div class="cards-grid">
           
+          <!-- CARD 1 -->
           <div class="mil-card-wrap">
             <svg class="card-border-svg" viewBox="0 0 200 250" preserveAspectRatio="none">
               <path d="M 16,1 L 184,1 L 199,16 L 199,102 L 191,110 L 191,140 L 199,148 L 199,234 L 184,249 L 16,249 L 1,234 L 1,148 L 9,140 L 9,110 L 1,102 L 1,16 Z" 
@@ -525,6 +546,7 @@
             </div>
           </div>
 
+          <!-- CARD 2 -->
           <div class="mil-card-wrap">
             <svg class="card-border-svg" viewBox="0 0 200 250" preserveAspectRatio="none">
               <path d="M 16,1 L 184,1 L 199,16 L 199,102 L 191,110 L 191,140 L 199,148 L 199,234 L 184,249 L 16,249 L 1,234 L 1,148 L 9,140 L 9,110 L 1,102 L 1,16 Z" 
@@ -547,6 +569,7 @@
             </div>
           </div>
 
+          <!-- CARD 3 -->
           <div class="mil-card-wrap">
             <svg class="card-border-svg" viewBox="0 0 200 250" preserveAspectRatio="none">
               <path d="M 16,1 L 184,1 L 199,16 L 199,102 L 191,110 L 191,140 L 199,148 L 199,234 L 184,249 L 16,249 L 1,234 L 1,148 L 9,140 L 9,110 L 1,102 L 1,16 Z" 
@@ -569,6 +592,7 @@
             </div>
           </div>
 
+          <!-- CARD 4 -->
           <div class="mil-card-wrap">
             <svg class="card-border-svg" viewBox="0 0 200 250" preserveAspectRatio="none">
               <path d="M 16,1 L 184,1 L 199,16 L 199,102 L 191,110 L 191,140 L 199,148 L 199,234 L 184,249 L 16,249 L 1,234 L 1,148 L 9,140 L 9,110 L 1,102 L 1,16 Z" 
@@ -594,8 +618,10 @@
         </div>
       </div>
 
+      <!-- LOWER DASHBOARD: RADAR & STATS -->
       <div class="dashboard-grid">
         
+        <!-- RADAR DISPLAY -->
         <div class="radar-box">
           <div class="corner-dot corner-tl"></div>
           <div class="corner-dot corner-tr"></div>
@@ -606,10 +632,11 @@
           </div>
         </div>
 
+        <!-- STATS & ANNOUNCEMENTS COLUMN -->
         <div class="stats-column">
           
           <div class="top-panels-grid">
-            
+            <!-- FLEET STATUS -->
             <div class="panel-box">
               <div class="corner-dot corner-tl"></div>
               <div class="corner-dot corner-tr"></div>
@@ -625,6 +652,7 @@
               </table>
             </div>
 
+            <!-- MILITARY OVERVIEW -->
             <div class="panel-box">
               <div class="corner-dot corner-tl"></div>
               <div class="corner-dot corner-tr"></div>
@@ -660,6 +688,7 @@
             </div>
           </div>
 
+          <!-- ANNOUNCEMENTS BOX -->
           <div class="announcements-box">
             <div class="corner-dot corner-tl"></div>
             <div class="corner-dot corner-tr"></div>
@@ -695,6 +724,7 @@
 </div>
 
 <script>
+/* LIVE CLOCK */
 function updateClock(){
   const now = new Date();
   const h = now.getHours().toString().padStart(2,"0");
@@ -705,6 +735,7 @@ function updateClock(){
 setInterval(updateClock, 1000);
 updateClock();
 
+/* TICK ROW */
 const tickrow = document.getElementById("tickrow");
 for(let i=0;i<54;i++){
   const t = document.createElement("div");
@@ -712,6 +743,7 @@ for(let i=0;i<54;i++){
   tickrow.appendChild(t);
 }
 
+/* NETWORK TRAFFIC CHART */
 const trafficCanvas = document.getElementById("trafficCanvas");
 const tctx = trafficCanvas.getContext("2d");
 function resizeTraffic(){
@@ -753,6 +785,7 @@ function drawTraffic(){
 }
 drawTraffic();
 
+/* MEMORY USAGE BARS */
 const memoryBox = document.getElementById("memoryBox");
 const bars = [];
 for(let i=0;i<36;i++){
@@ -769,6 +802,7 @@ setInterval(()=>{
   });
 }, 1400);
 
+/* FETCH REAL CITIZEN RANKS FROM FLASK ENDPOINT */
 async function loadRanks() {
   const rankBody = document.getElementById("rankBody");
   try {
@@ -786,6 +820,7 @@ async function loadRanks() {
 }
 loadRanks();
 
+/* RADAR SWEEP ANIMATION */
 const radarCanvas = document.getElementById("radarCanvas");
 const rctx = radarCanvas.getContext("2d");
 
