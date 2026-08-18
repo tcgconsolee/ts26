@@ -42,7 +42,6 @@
     box-sizing: border-box;
   }
 
-  /* ===== MAIN GRID LAYOUT ===== */
   .layout {
     display: grid;
     grid-template-columns: 280px 1fr;
@@ -50,7 +49,6 @@
     align-items: stretch;
   }
 
-  /* ===== LEFT PANEL (SYSTEM) ===== */
   .left-panel {
     border-right: 1px solid var(--grey-dark);
     padding-right: 16px;
@@ -155,7 +153,6 @@
   .rank-table td { padding: 3px 0; color: var(--white); }
   .rank-table td.dim { color: var(--grey-mid); }
 
-  /* ===== RIGHT MAIN CONTENT AREA ===== */
   .main-content {
     display: flex;
     flex-direction: column;
@@ -164,7 +161,6 @@
     min-width: 0;
   }
 
-  /* ===== TOP NAVBAR ===== */
   .navbar {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -189,7 +185,6 @@
     z-index: 2;
   }
 
-  /* ===== SERVICES MODULE GRID ===== */
   .services-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -198,7 +193,6 @@
     height: 560px;
   }
 
-  /* PANEL BOX COMMON */
   .service-card {
     border: 1px solid var(--border-dim);
     background: #000;
@@ -249,7 +243,6 @@
   .corner-bl { bottom: 2px; left: 2px; }
   .corner-br { bottom: 2px; right: 2px; }
 
-  /* CARD 01: CITIZENSHIP IDENTIFICATION */
   .citizen-body {
     display: grid;
     grid-template-columns: 1fr 140px;
@@ -333,7 +326,6 @@
     text-decoration: none;
   }
 
-  /* CARD 02: PLANET REGISTRATION */
   .planet-body {
     display: grid;
     grid-template-columns: 1fr 140px;
@@ -372,7 +364,6 @@
     border-radius: 50%;
   }
 
-  /* CARD 03: IMPERIAL TRAVEL PERMIT */
   .permit-route {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -403,7 +394,6 @@
     margin-bottom: 8px;
   }
 
-  /* CARD 04: REPORT DISTURBANCE */
   .form-group {
     display: flex;
     flex-direction: column;
@@ -478,13 +468,23 @@
     .services-grid { grid-template-columns: 1fr; height: auto; }
   }
 </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/crt.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
 </head>
 <body>
 
 <div class="frame">
+
+  <div class="navbar">
+  <a href="{{ url_for('home') }}">Home</a>
+  <a href="{{ url_for('services') }}" class="active">Services</a>
+  <a href="{{ url_for('admin') }}">Admin</a>
+  <a href="{{ url_for('military') }}">Military</a>
+  <a href="{{ url_for('report') }}">Report</a>
+  </div>
+
   <div class="layout">
 
-    <!-- LEFT PANEL: SYSTEM -->
     <div class="left-panel">
       <div>
         <div class="sys-header">
@@ -551,22 +551,11 @@
       </div>
     </div>
 
-    <!-- RIGHT PANEL: SERVICES -->
     <div class="main-content">
       
-      <!-- TOP NAVIGATION -->
-      <div class="navbar">
-        <a href="{{ url_for('home') }}">Home</a>
-        <a href="{{ url_for('services') }}" class="active">Services</a>
-        <a href="{{ url_for('admin') }}">Admin</a>
-        <a href="{{ url_for('military') }}">Military</a>
-        <a href="{{ url_for('report') }}">Report</a>
-      </div>
 
-      <!-- SERVICES 2x2 GRID -->
       <div class="services-grid">
         
-        <!-- CARD 01: CITIZENSHIP IDENTIFICATION -->
         <div class="service-card">
           <div class="corner-dot corner-tl"></div>
           <div class="corner-dot corner-tr"></div>
@@ -602,7 +591,6 @@
                 </div>
               </div>
 
-              <!-- AVATAR IMAGE -->
               <div class="avatar-box">
                 <img src="{{ citizen.avatar_url if citizen and citizen.avatar_url else url_for('static', filename='imgs/user.png') }}" alt="Citizen Avatar">
               </div>
@@ -615,7 +603,6 @@
           </div>
         </div>
 
-        <!-- CARD 02: PLANET REGISTRATION -->
         <div class="service-card">
           <div class="corner-dot corner-tl"></div>
           <div class="corner-dot corner-tr"></div>
@@ -655,7 +642,6 @@
                 </div>
               </div>
 
-              <!-- TOPOGRAPHY PLANET IMAGE -->
               <div class="topography-container">
                 <div class="topography-label">TOPOGRAPHY</div>
                 <div class="topo-img-wrap">
@@ -666,7 +652,6 @@
           </div>
         </div>
 
-        <!-- CARD 03: IMPERIAL TRAVEL PERMIT -->
         <div class="service-card">
           <div class="corner-dot corner-tl"></div>
           <div class="corner-dot corner-tr"></div>
@@ -733,7 +718,6 @@
           <button class="btn-outline" style="width:100%;">REQUEST PERMIT</button>
         </div>
 
-        <!-- CARD 04: REPORT DISTURBANCE -->
         <div class="service-card">
           <div class="corner-dot corner-tl"></div>
           <div class="corner-dot corner-tr"></div>
@@ -806,7 +790,6 @@
 </div>
 
 <script>
-/* LIVE CLOCK */
 function updateClock(){
   const now = new Date();
   const h = now.getHours().toString().padStart(2,"0");
@@ -817,7 +800,6 @@ function updateClock(){
 setInterval(updateClock, 1000);
 updateClock();
 
-/* TICK ROW */
 const tickrow = document.getElementById("tickrow");
 if(tickrow) {
   for(let i=0;i<54;i++){
@@ -827,7 +809,6 @@ if(tickrow) {
   }
 }
 
-/* NETWORK TRAFFIC CHART */
 const trafficCanvas = document.getElementById("trafficCanvas");
 const tctx = trafficCanvas ? trafficCanvas.getContext("2d") : null;
 function resizeTraffic(){
@@ -872,7 +853,6 @@ if (trafficCanvas) {
   drawTraffic();
 }
 
-/* MEMORY USAGE BARS */
 const memoryBox = document.getElementById("memoryBox");
 if (memoryBox) {
   const bars = [];
@@ -891,7 +871,6 @@ if (memoryBox) {
   }, 1400);
 }
 
-/* SEVERITY TICKS */
 const sevTicks = document.getElementById("sevTicks");
 if (sevTicks) {
   for(let i=0; i<28; i++){
@@ -906,5 +885,6 @@ window.addEventListener("resize", ()=>{
 });
 </script>
 
+<script src="{{ url_for('static', filename='js/crt.js') }}" defer></script>
 </body>
 </html>

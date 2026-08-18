@@ -377,6 +377,8 @@
     .navbar{ grid-template-columns: repeat(5, 1fr); font-size:10px; }
   }
 </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/crt.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
 </head>
 <body>
 
@@ -614,5 +616,6 @@ async function loadTransmissions() {
 loadTransmissions();
 </script>
 
+<script src="{{ url_for('static', filename='js/crt.js') }}" defer></script>
 </body>
 </html>

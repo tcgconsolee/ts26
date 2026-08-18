@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/galaxy.css') }}">
 <style>
   :root {
     --gold: #FFD307;
@@ -42,7 +43,6 @@
     box-sizing: border-box;
   }
 
-  /* ===== MAIN GRID LAYOUT ===== */
   .layout {
     display: grid;
     grid-template-columns: 280px 1fr;
@@ -50,7 +50,6 @@
     align-items: stretch;
   }
 
-  /* ===== LEFT PANEL (SYSTEM) ===== */
   .left-panel {
     border-right: 1px solid var(--grey-dark);
     padding-right: 16px;
@@ -155,7 +154,6 @@
   .rank-table td { padding: 3px 0; color: var(--white); }
   .rank-table td.dim { color: var(--grey-mid); }
 
-  /* ===== RIGHT MAIN CONTENT AREA ===== */
   .main-content {
     display: flex;
     flex-direction: column;
@@ -164,7 +162,6 @@
     min-width: 0;
   }
 
-  /* ===== TOP NAVBAR ===== */
   .navbar {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -189,12 +186,11 @@
     z-index: 2;
   }
 
-  /* ===== REPORT VIEW LAYOUT ===== */
   .report-view {
     display: grid;
     grid-template-columns: 1fr 320px;
     gap: 16px;
-    height: 560px;
+    height: clamp(420px, calc(100vh - 138px), 900px);
   }
 
   .left-col {
@@ -203,7 +199,6 @@
     gap: 12px;
   }
 
-  /* BIG DISPLAY BOX */
   .big-box {
     flex: 1;
     border: 1px solid var(--border-dim);
@@ -211,7 +206,6 @@
     background: #000;
   }
 
-  /* YELLOW CORNER BRACKETS */
   .corner-square {
     position: absolute;
     width: 5px;
@@ -224,9 +218,8 @@
   .corner-square.bl { bottom: -3px; left: -3px; }
   .corner-square.br { bottom: -3px; right: -3px; }
 
-  /* LATEST VERIFIED REPORTS */
   .reports-box {
-    height: 200px;
+    height: clamp(150px, 24vh, 260px);
     border: 1px solid var(--border-dim);
     position: relative;
     padding: 10px 14px;
@@ -278,7 +271,6 @@
   .sq-indicator.gold { background: var(--gold); }
   .sq-indicator.white { background: var(--white); }
 
-  /* RIGHT FORM COLUMN */
   .right-col {
     display: flex;
     flex-direction: column;
@@ -346,16 +338,26 @@
     .layout { grid-template-columns: 1fr; }
     .left-panel { border-right: none; border-bottom: 1px solid var(--grey-dark); padding-right: 0; padding-bottom: 16px; }
     .report-view { grid-template-columns: 1fr; height: auto; }
-    .big-box { height: 300px; }
+    .big-box { height: clamp(280px, 55vh, 480px); }
   }
 </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/crt.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
 </head>
 <body>
 
 <div class="frame">
+
+  <div class="navbar">
+  <a href="{{ url_for('home') }}">Home</a>
+  <a href="{{ url_for('services') }}">Services</a>
+  <a href="{{ url_for('admin') }}">Admin</a>
+  <a href="{{ url_for('military') }}">Military</a>
+  <a href="{{ url_for('report') }}" class="active">Report</a>
+  </div>
+
   <div class="layout">
 
-    <!-- LEFT PANEL: SYSTEM -->
     <div class="left-panel">
       <div>
         <div class="sys-header">
@@ -422,33 +424,44 @@
       </div>
     </div>
 
-    <!-- RIGHT PANEL: REPORT VIEW -->
     <div class="main-content">
       
-      <!-- TOP NAVIGATION -->
-      <div class="navbar">
-        <a href="{{ url_for('home') }}">Home</a>
-        <a href="{{ url_for('services') }}">Services</a>
-        <a href="{{ url_for('admin') }}">Admin</a>
-        <a href="{{ url_for('military') }}">Military</a>
-        <a href="{{ url_for('report') }}" class="active">Report</a>
-      </div>
 
-      <!-- MAIN REPORT CONTENT AREA -->
       <div class="report-view">
         
-        <!-- LEFT COLUMN: BIG BOX & LATEST REPORTS -->
         <div class="left-col">
           
-          <!-- BIG DISPLAY BOX -->
           <div class="big-box">
             <div class="corner-square tl"></div>
             <div class="corner-square tr"></div>
             <div class="corner-square bl"></div>
             <div class="corner-square br"></div>
+
+            <div class="gx-fill" id="galaxyWrap" data-mode="picker">
+              <canvas id="galaxyCanvas"></canvas>
+
+              <div class="gx-topbar">
+                <div class="gx-search">
+                  <input id="gxSearchInput" type="text" placeholder="SEARCH SYSTEM..." autocomplete="off" spellcheck="false">
+                  <ul id="gxSearchList"></ul>
+                </div>
+                <button id="gxReset" title="Return to galactic overview">&#8982; RESET VIEW</button>
+              </div>
+
+              <div id="gxTooltip"></div>
+
+              <div class="planet-panel" id="planetPanel"></div>
+
+              <div class="gx-hud">
+                <div>THE NEW AND IMPROVED GALACTIC EMPIRE</div>
+                <div>HEIL LORD VADER</div>
+                <div id="gxCoords">X +0.0&nbsp;&nbsp;Z +0.0</div>
+              </div>
+
+              <div id="gxLoading">PERHAPS THE ARCHIVES WERE COMPLETE</div>
+            </div>
           </div>
 
-          <!-- LATEST VERIFIED REPORTS TABLE -->
           <div class="reports-box">
             <div class="corner-square tl"></div>
             <div class="corner-square tr"></div>
@@ -539,7 +552,6 @@
 
         </div>
 
-        <!-- RIGHT COLUMN: FORM INPUTS -->
         <form class="right-col" action="{{ url_for('report') }}" method="POST">
           
           <div class="form-section f-type">
@@ -563,6 +575,7 @@
             <div class="corner-square br"></div>
             <div class="field-title">LOCATION</div>
             <input type="text" name="location" value="MUSTAFAR — SECTOR 04" placeholder="ENTER LOCATION...">
+            <input type="hidden" name="sector" value="OUTER RIM">
           </div>
 
           <div class="form-section f-time">
@@ -595,7 +608,6 @@
 </div>
 
 <script>
-/* LIVE CLOCK */
 function updateClock(){
   const now = new Date();
   const h = now.getHours().toString().padStart(2,"0");
@@ -609,7 +621,6 @@ function updateClock(){
 setInterval(updateClock, 1000);
 updateClock();
 
-/* TICK ROW */
 const tickrow = document.getElementById("tickrow");
 if (tickrow) {
   for(let i=0;i<54;i++){
@@ -619,7 +630,6 @@ if (tickrow) {
   }
 }
 
-/* NETWORK TRAFFIC CHART */
 const trafficCanvas = document.getElementById("trafficCanvas");
 const tctx = trafficCanvas ? trafficCanvas.getContext("2d") : null;
 function resizeTraffic(){
@@ -665,7 +675,6 @@ if (trafficCanvas) {
   drawTraffic();
 }
 
-/* MEMORY USAGE BARS */
 const memoryBox = document.getElementById("memoryBox");
 if (memoryBox) {
   const bars = [];
@@ -689,5 +698,11 @@ window.addEventListener("resize", ()=>{
 });
 </script>
 
+<script type="importmap">
+{ "imports": { "three": "{{ url_for('static', filename='js/vendor/three.module.min.js') }}" } }
+</script>
+<script type="module" src="{{ url_for('static', filename='js/galaxy.js') }}"></script>
+
+<script src="{{ url_for('static', filename='js/crt.js') }}" defer></script>
 </body>
 </html>
