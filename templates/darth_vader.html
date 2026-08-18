@@ -152,6 +152,7 @@
     background: #050505;
     overflow: hidden;
     z-index: 0;
+    cursor: pointer;
   }
   
   .hero video {
@@ -175,6 +176,7 @@
     margin: 0;
     z-index: 1;
     text-transform: uppercase;
+    pointer-events: none;
   }
 
   .collect-btn {
@@ -258,10 +260,9 @@
 
 <div class="frame">
 
-  <!-- BACKGROUND HERO IMAGE -->
   <!-- BACKGROUND HERO VIDEO -->
-  <div class="hero">
-    <video autoplay muted playsinline preload="auto">
+  <div class="hero" id="heroContainer">
+    <video id="heroVideo" muted playsinline preload="auto">
       <source src="{{ url_for('static', filename='switch.webm') }}" type="video/webm">
       Your browser does not support the video tag.
     </video>
@@ -302,5 +303,48 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/crt.js') }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const heroContainer = document.getElementById('heroContainer');
+    const heroVideo = document.getElementById('heroVideo');
+    let totalClicks = 0;
+    let typedSequence = '';
+    let isBlocked = false;
+
+    // Detect when the word "block" is typed
+    window.addEventListener('keydown', (e) => {
+      typedSequence += e.key.toLowerCase();
+      
+      if (typedSequence.length > 5) {
+        typedSequence = typedSequence.slice(-5);
+      }
+
+      if (typedSequence === 'block') {
+        isBlocked = true;
+        totalClicks = 0; // Reset accumulated clicks
+        typedSequence = '';
+      }
+    });
+
+    // Handle clicks anywhere on the hero element
+    heroContainer.addEventListener('click', () => {
+      // If blocked, ignore this specific click and unblock for future clicks
+      if (isBlocked) {
+        isBlocked = false;
+        return;
+      }
+
+      totalClicks++;
+
+      // Trigger video playback on the second successful click
+      if (totalClicks === 2) {
+        heroVideo.play().catch(error => {
+          console.error("Playback error:", error);
+        });
+        totalClicks = 0;
+      }
+    });
+  });
+</script>
 </body>
 </html>

@@ -10,6 +10,28 @@
             background: #000;
         }
 
+        /* Intro Overlay Styles */
+        #intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+            pointer-events: auto;
+        }
+
+        #intro-overlay img {
+            width: 100%;
+            object-fit: contain;
+        }
+
         .img-section {
             position: absolute;
             left: 0;
@@ -164,6 +186,11 @@
 </head>
 
 <body style="overflow:hidden">
+    <!-- Intro Overlay -->
+    <div id="intro-overlay">
+        <img src="../static/1.png" alt="Intro">
+    </div>
+
     <div class="img-section">
         <img src="../static/imgs/tyler.png" alt="" class="tyler">
         <img src="../static/imgs/line.svg" alt="" class="line">
@@ -205,6 +232,18 @@
     }
 
     flicker();
+
+    // Intro Overlay Fade Out
+    window.addEventListener('DOMContentLoaded', () => {
+        const overlay = document.getElementById('intro-overlay');
+        setTimeout(() => {
+            overlay.style.opacity = '0';
+            overlay.style.pointerEvents = 'none';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 500); // Wait for fade transition to finish
+        }, 2000); // 2 seconds display time
+    });
     </script>
 <script src="{{ url_for('static', filename='js/crt.js') }}" defer></script>
 </body>
