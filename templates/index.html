@@ -37,6 +37,7 @@
     border-radius:0;
   }
 
+  /* ===== TOP NAV ===== */
   .navbar{
     display:grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
@@ -62,12 +63,14 @@
     z-index:2;
   }
 
+  /* ===== MAIN GRID ===== */
   .layout{
     display:grid;
     grid-template-columns: 320px 1fr 400px;
     gap:32px;
   }
 
+  /* ===== LEFT PANEL ===== */
   .left-panel{
     border-right:1px solid #262626;
     padding-right:24px;
@@ -174,6 +177,7 @@
   }
   .rank-table td.dim{ color:var(--grey-mid); }
 
+  /* ===== CENTER PANEL ===== */
   .center-panel{
     border-right:1px solid #262626;
     padding-right:24px;
@@ -263,6 +267,7 @@
   .log-row .loc{ color:#c9c9c9; letter-spacing:0.5px; }
   .log-row .msg{ color:inherit; }
 
+  /* ===== RIGHT PANEL ===== */
   .bounty-title{
     font-size:20px;
     letter-spacing:1px;
@@ -293,6 +298,7 @@
     display:block;
     filter: sepia(0.8) saturate(2) hue-rotate(-10deg) brightness(0.9) contrast(1.1);
   }
+  /* Yellow corner brackets overlay */
   .bounty-frame::before,
   .bounty-frame::after {
     content: "";
@@ -378,6 +384,7 @@
 
 <div class="frame">
 
+  <!-- TOP NAVIGATION BAR -->
   <div class="navbar">
     <a href="{{ url_for('home') }}" class="active">Home</a>
     <a href="{{ url_for('services') }}">Services</a>
@@ -388,6 +395,7 @@
 
   <div class="layout">
 
+    <!-- LEFT: SYSTEM PANEL -->
     <div class="left-panel">
       <div class="sys-header">
         <span>SYSTEM</span>
@@ -436,11 +444,12 @@
       </table>
     </div>
 
+    <!-- CENTER: NEWS FEED -->
     <div class="center-panel">
       <h1 class="headline">BREAKING NEWS: IMPERIAL FORCES RESTORE ORDER IN THE OUTER RIM</h1>
 
       <div class="media-wrap">
-        
+        <!-- STATIC IMAGE LOCATION UPDATED FOR FLASK -->
         <img src="{{ url_for('static', filename='imgs/stormtroopers.png') }}" alt="Broadcast still placeholder">
         <div class="play-btn"></div>
       </div>
@@ -454,6 +463,7 @@
       <div class="log-list" id="logList"></div>
     </div>
 
+    <!-- RIGHT: BOUNTY PANEL -->
     <div class="right-panel">
       <div class="bounty-title"><a href="{{ url_for('bounty') }}">BOUNTY &gt;</a></div>
 
@@ -487,6 +497,7 @@
 </div>
 
 <script>
+/* live clock */
 function updateClock(){
   const now = new Date();
   const h = now.getHours().toString().padStart(2,"0");
@@ -497,6 +508,7 @@ function updateClock(){
 setInterval(updateClock, 1000);
 updateClock();
 
+/* tick row under clock */
 const tickrow = document.getElementById("tickrow");
 const tickCount = 60;
 for(let i=0;i<tickCount;i++){
@@ -505,6 +517,7 @@ for(let i=0;i<tickCount;i++){
   tickrow.appendChild(t);
 }
 
+/* network traffic mini line chart */
 const trafficCanvas = document.getElementById("trafficCanvas");
 const tctx = trafficCanvas.getContext("2d");
 function resizeTraffic(){
@@ -547,6 +560,7 @@ function drawTraffic(){
 drawTraffic();
 window.addEventListener("resize", resizeTraffic);
 
+/* memory usage bars */
 const memoryBox = document.getElementById("memoryBox");
 const barCount = 40;
 const bars = [];
@@ -564,6 +578,7 @@ setInterval(()=>{
   });
 }, 1400);
 
+/* FETCH REAL CITIZEN RANKS FROM FLASK ENDPOINT */
 async function loadRanks() {
   const rankBody = document.getElementById("rankBody");
   try {
@@ -581,6 +596,7 @@ async function loadRanks() {
 }
 loadRanks();
 
+/* FETCH REAL TRANSMISSIONS LOG FROM FLASK ENDPOINT */
 async function loadTransmissions() {
   const logList = document.getElementById("logList");
   try {
