@@ -1,0 +1,47 @@
+body,
+button,
+input,
+select,
+textarea {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+body {
+  justify-content: flex-start;
+}
+
+.frame {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 22px 34px;
+}
+
+.navbar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-bottom: 1px solid #2a2a2a;
+  margin-bottom: 16px;
+}
+.navbar a {
+  color: var(--white);
+  text-decoration: none;
+  text-align: center;
+  padding: 12px 0;
+  font-size: 12.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  position: relative;
+  clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%);
+  margin-right: -1px;
+  transition: color .15s;
+}
+.navbar a.active {
+  background: var(--white);
+  color: var(--black);
+  font-weight: 700;
+  z-index: 2;
+}
+.navbar a:hover:not(.active) {
+  color: var(--gold);
+}

@@ -20,6 +20,8 @@
   .submit-btn { flex: 1; background: var(--gold); color: var(--black); border: none; padding: 12px; font-weight: 800; cursor: pointer; letter-spacing: 2px; text-transform: uppercase; }
   .cancel-btn { background: transparent; color: var(--white); border: 1px solid #333; padding: 12px 16px; text-decoration: none; font-size: 11px; text-align: center; }
 </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/crt.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
 </head>
 <body>
 <div class="form-box">
@@ -44,5 +46,6 @@
     </div>
   </form>
 </div>
+<script src="{{ url_for('static', filename='js/crt.js') }}" defer></script>
 </body>
 </html>

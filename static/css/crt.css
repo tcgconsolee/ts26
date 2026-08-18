@@ -1,0 +1,110 @@
+html {
+  background: #000;
+}
+
+.crt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+  pointer-events: none;
+}
+
+.crt-scanlines {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0, 0, 0, 0.07) 3px,
+      rgba(0, 0, 0, 0.07) 4px
+    ),
+    repeating-linear-gradient(
+      to right,
+      rgba(255, 60, 60, 0.018) 0px,
+      rgba(60, 255, 60, 0.014) 1px,
+      rgba(60, 60, 255, 0.018) 2px,
+      transparent 3px
+    );
+}
+
+.crt-grain {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.035;
+}
+
+.crt-scanners {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.crt-scanners span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -4px;
+  height: 3px;
+  background: rgba(255, 255, 255, var(--op, 0.16));
+  box-shadow:
+    0 5px 0 rgba(255, 255, 255, 0.07),
+    0 9px 0 rgba(255, 255, 255, 0.035),
+    0 0 10px rgba(255, 255, 255, 0.08);
+  will-change: transform;
+  animation: crt-scan-down var(--dur, 10s) linear infinite;
+  animation-delay: var(--del, 0s);
+}
+@keyframes crt-scan-down {
+  0%   { transform: translateY(0); opacity: 0; }
+  3%   { opacity: 1; }
+  59%  { transform: translateY(calc(100vh + 8px)); opacity: 0.7; }
+  62%  { transform: translateY(calc(100vh + 8px)); opacity: 0; }
+  100% { transform: translateY(calc(100vh + 8px)); opacity: 0; }
+}
+
+.crt-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 0%, transparent 15%),
+    linear-gradient(to top, rgba(255, 255, 255, 0.025) 0%, transparent 12%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 0%, transparent 12%),
+    linear-gradient(to left, rgba(255, 255, 255, 0.025) 0%, transparent 12%);
+}
+
+.crt-bevel {
+  position: fixed;
+  inset: 0;
+  z-index: 99996;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 70px rgba(0, 0, 0, 0.90),
+    inset 0 0 28px rgba(0, 0, 0, 0.68);
+}
+
+.crt-frame {
+  position: fixed;
+  inset: 0;
+  z-index: 99997;
+  pointer-events: none;
+  background: #0b0908;
+  visibility: hidden;
+}
+
+.crt-stroke {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 99998;
+  pointer-events: none;
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-scanners span { animation: none; visibility: hidden; }
+  .crt-grain { display: none; }
+}

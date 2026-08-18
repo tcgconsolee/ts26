@@ -82,7 +82,7 @@
             outline: none;
             background: none;
             color: #fff;
-            font-family: 's';
+            font-family: 'JetBrains Mono', monospace;
         }
 
         input:focus {
@@ -148,7 +148,7 @@
             opacity: 0.035;
             width: 100vw;
             height: 100vw;
-            font-family: 's';
+            font-family: 'JetBrains Mono', monospace;
             font-weight: 800;
             font-size: 6vw;
             color: #fff;
@@ -159,6 +159,8 @@
             transition: opacity 0.05s ease;
         }
     </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/crt.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
 </head>
 
 <body style="overflow:hidden">
@@ -202,6 +204,7 @@
 
     flicker();
     </script>
+<script src="{{ url_for('static', filename='js/crt.js') }}" defer></script>
 </body>
 
 </html>

@@ -20,6 +20,8 @@
   .sq { display: inline-block; width: 8px; height: 8px; }
   .gold { background: var(--gold); } .white { background: var(--white); }
 </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/crt.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
 </head>
 <body>
 <div class="box">
@@ -59,5 +61,6 @@
     </tbody>
   </table>
 </div>
+<script src="{{ url_for('static', filename='js/crt.js') }}" defer></script>
 </body>
 </html>
