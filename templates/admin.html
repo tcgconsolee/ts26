@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/galaxy.css') }}">
 <style>
   :root {
     --gold: #FFD307;
@@ -42,7 +43,6 @@
     box-sizing: border-box;
   }
 
-  /* ===== MAIN GRID LAYOUT ===== */
   .layout {
     display: grid;
     grid-template-columns: 280px 1fr;
@@ -50,7 +50,6 @@
     align-items: stretch;
   }
 
-  /* ===== LEFT PANEL (SYSTEM) ===== */
   .left-panel {
     border-right: 1px solid var(--grey-dark);
     padding-right: 16px;
@@ -155,7 +154,6 @@
   .rank-table td { padding: 3px 0; color: var(--white); }
   .rank-table td.dim { color: var(--grey-mid); }
 
-  /* ===== RIGHT MAIN CONTENT AREA ===== */
   .main-content {
     display: flex;
     flex-direction: column;
@@ -164,7 +162,6 @@
     min-width: 0;
   }
 
-  /* ===== TOP NAVBAR ===== */
   .navbar {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -189,27 +186,14 @@
     z-index: 2;
   }
 
-  /* ===== ADMIN DISPLAY VIEW ===== */
   .admin-display {
-    height: 560px;
+    height: clamp(420px, calc(100vh - 118px), 900px);
     border: 1px solid var(--gold);
     position: relative;
     background: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+    overflow: hidden;
   }
 
-  .admin-text {
-    color: var(--gold);
-    font-size: 38px;
-    font-weight: 400;
-    letter-spacing: 2px;
-    line-height: 1.3;
-  }
-
-  /* YELLOW CORNER DOTS/BRACKETS */
   .corner-square {
     position: absolute;
     width: 4px;
@@ -226,8 +210,8 @@
     body { overflow-y: auto; }
     .layout { grid-template-columns: 1fr; }
     .left-panel { border-right: none; border-bottom: 1px solid var(--grey-dark); padding-right: 0; padding-bottom: 16px; }
-    .admin-display { height: 400px; }
-    .admin-text { font-size: 26px; }
+    .admin-display { height: clamp(360px, 62vh, 560px); }
+    .planet-panel { width: min(302px, calc(100% - 20px)); }
   }
 </style>
 </head>
@@ -236,7 +220,6 @@
 <div class="frame">
   <div class="layout">
 
-    <!-- LEFT PANEL: SYSTEM -->
     <div class="left-panel">
       <div>
         <div class="sys-header">
@@ -303,10 +286,8 @@
       </div>
     </div>
 
-    <!-- RIGHT PANEL: ADMIN VIEW -->
     <div class="main-content">
       
-      <!-- TOP NAVIGATION -->
       <div class="navbar">
         <a href="{{ url_for('home') }}">Home</a>
         <a href="{{ url_for('services') }}">Services</a>
@@ -315,16 +296,33 @@
         <a href="{{ url_for('report') }}">Report</a>
       </div>
 
-      <!-- MAIN ADMIN CONTENT AREA -->
-      <div class="admin-display">
+      <div class="admin-display" id="galaxyWrap">
         <div class="corner-square tl"></div>
         <div class="corner-square tr"></div>
         <div class="corner-square bl"></div>
         <div class="corner-square br"></div>
 
-        <div class="admin-text">
-          galaxy vala<br>thingy
+        <canvas id="galaxyCanvas"></canvas>
+
+        <div class="gx-topbar">
+          <div class="gx-search">
+            <input id="gxSearchInput" type="text" placeholder="SEARCH SYSTEM..." autocomplete="off" spellcheck="false">
+            <ul id="gxSearchList"></ul>
+          </div>
+          <button id="gxReset" title="Return to galactic overview">&#8982; RESET VIEW</button>
         </div>
+
+        <div id="gxTooltip"></div>
+
+        <div class="planet-panel" id="planetPanel"></div>
+
+        <div class="gx-hud">
+          <div>THE NEW AND IMPROVED GALACTIC EMPIRE</div>
+          <div>HEIL LORD VADER</div>
+          <div id="gxCoords">X +0.0&nbsp;&nbsp;Z +0.0</div>
+        </div>
+
+        <div id="gxLoading">PERHAPS THE ARCHIVES WERE COMPLETE</div>
       </div>
 
     </div>
@@ -333,7 +331,6 @@
 </div>
 
 <script>
-/* LIVE CLOCK */
 function updateClock(){
   const now = new Date();
   const h = now.getHours().toString().padStart(2,"0");
@@ -347,7 +344,6 @@ function updateClock(){
 setInterval(updateClock, 1000);
 updateClock();
 
-/* TICK ROW */
 const tickrow = document.getElementById("tickrow");
 if (tickrow) {
   for(let i=0;i<54;i++){
@@ -357,7 +353,6 @@ if (tickrow) {
   }
 }
 
-/* NETWORK TRAFFIC CHART */
 const trafficCanvas = document.getElementById("trafficCanvas");
 const tctx = trafficCanvas ? trafficCanvas.getContext("2d") : null;
 function resizeTraffic(){
@@ -403,7 +398,6 @@ if (trafficCanvas) {
   drawTraffic();
 }
 
-/* MEMORY USAGE BARS */
 const memoryBox = document.getElementById("memoryBox");
 if (memoryBox) {
   const bars = [];
@@ -426,6 +420,11 @@ window.addEventListener("resize", ()=>{
   resizeTraffic();
 });
 </script>
+
+<script type="importmap">
+{ "imports": { "three": "{{ url_for('static', filename='js/vendor/three.module.min.js') }}" } }
+</script>
+<script type="module" src="{{ url_for('static', filename='js/galaxy.js') }}"></script>
 
 </body>
 </html>
