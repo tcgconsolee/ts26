@@ -152,7 +152,7 @@
     background: #050505;
     overflow: hidden;
     z-index: 0;
-    cursor: pointer;
+    cursor: default;
   }
   
   .hero video {
@@ -305,43 +305,72 @@
 <script src="{{ url_for('static', filename='js/crt.js') }}" defer></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    const heroContainer = document.getElementById('heroContainer');
     const heroVideo = document.getElementById('heroVideo');
-    let totalClicks = 0;
-    let typedSequence = '';
-    let isBlocked = false;
 
-    // Detect when the word "block" is typed
-    window.addEventListener('keydown', (e) => {
-      typedSequence += e.key.toLowerCase();
-      
-      if (typedSequence.length > 5) {
-        typedSequence = typedSequence.slice(-5);
+    const FPS        = 24;
+    const START_TIME = 3  / FPS;  // frame 3  → 0.125s
+    const PAUSE_TIME = 60 / FPS;  // frame 60 → 2.500s
+
+    heroVideo.playbackRate = 1.0;
+
+    // ── state ──────────────────────────────────────────────
+    // 'init'    : not yet started
+    // 'playing' : playing, will pause at frame 60
+    // 'held'    : paused at frame 60, waiting for two clicks
+    // 'free'    : two clicks received, play to end uninterrupted
+    let state      = 'init';
+    let clickCount = 0;
+
+    // ── start playback from frame 3 ───────────────────────
+    function startPlayback() {
+      if (state !== 'init') return;
+      state = 'playing';
+      heroVideo.currentTime = START_TIME;
+      heroVideo.play().catch(err => {
+        // Autoplay blocked — wait for first click on the page
+        state = 'init';
+        console.warn('Autoplay blocked, waiting for click:', err);
+      });
+    }
+
+    heroVideo.addEventListener('loadedmetadata', startPlayback);
+
+    // If metadata already loaded (cached), kick off immediately
+    if (heroVideo.readyState >= 1) startPlayback();
+
+    // Fallback: first click anywhere starts playback if autoplay was blocked
+    document.addEventListener('click', function startOnClick() {
+      if (state === 'init') {
+        startPlayback();
       }
+      document.removeEventListener('click', startOnClick);
+    }, { once: true });
 
-      if (typedSequence === 'block') {
-        isBlocked = true;
-        totalClicks = 0; // Reset accumulated clicks
-        typedSequence = '';
+    // ── pause at frame 60 (only on first pass) ─────────────
+    heroVideo.addEventListener('timeupdate', () => {
+      if (state === 'playing' && heroVideo.currentTime >= PAUSE_TIME) {
+        heroVideo.pause();
+        state      = 'held';
+        clickCount = 0;
       }
     });
 
-    // Handle clicks anywhere on the hero element
-    heroContainer.addEventListener('click', () => {
-      // If blocked, ignore this specific click and unblock for future clicks
-      if (isBlocked) {
-        isBlocked = false;
-        return;
-      }
+    // ── redirect when video ends ───────────────────────────
+    heroVideo.addEventListener('ended', () => {
+      window.open('https://ts26dusri.onrender.com/', '_blank');
+    });
 
-      totalClicks++;
+    // ── two clicks anywhere to resume to end ──────────────
+    const UI_SELECTORS = '.navbar a, .collect-btn';
 
-      // Trigger video playback on the second successful click
-      if (totalClicks === 2) {
-        heroVideo.play().catch(error => {
-          console.error("Playback error:", error);
-        });
-        totalClicks = 0;
+    document.addEventListener('click', (e) => {
+      if (state !== 'held') return;
+      if (e.target.closest(UI_SELECTORS)) return;
+
+      clickCount++;
+      if (clickCount >= 2) {
+        state = 'free';
+        heroVideo.play().catch(err => console.error('Playback error:', err));
       }
     });
   });

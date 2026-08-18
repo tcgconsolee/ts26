@@ -207,7 +207,7 @@
       
       <div class="prompt-sentence">
         YOU ARE HUNTING 
-        <input type="text" name="target_name" placeholder="TARGET NAME" required class="inline-input">
+        <input type="text" name="target_name" placeholder="TARGET NAME" value="" required class="inline-input" id="targetInput">
         AND LIGHTSABER IS OF COLOR 
         <input type="text" name="saber_color" placeholder="COLOR" required class="inline-input">
       </div>
@@ -223,5 +223,27 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/crt.js') }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const input  = document.getElementById('targetInput');
+    const text   = 'anakin skywalker';
+    const delay  = 80; // ms per character
+    let   i      = 0;
+
+    // Clear any residual value and start typing
+    input.value = '';
+
+    const type = () => {
+      if (i < text.length) {
+        input.value += text[i];
+        i++;
+        setTimeout(type, delay);
+      }
+    };
+
+    // Small initial pause before typing starts
+    setTimeout(type, 400);
+  });
+</script>
 </body>
 </html>

@@ -174,8 +174,7 @@ def verify_bounty(bounty_id):
         bounty.status = 'CLAIMED'
         db.session.commit()
 
-        flash('BOUNTY CLAIMED SUCCESSFULLY.', 'success')
-        return redirect(url_for('bounty'))
+        return redirect(url_for('bounty', claimed='1'))
 
     elif target_input == 'darth vader':
         if saber_color=='blue':
@@ -184,8 +183,7 @@ def verify_bounty(bounty_id):
             bounty.status = 'CLAIMED'
             db.session.commit()
             
-            flash('BOUNTY CLAIMED SUCCESSFULLY.', 'success')
-            return redirect(url_for('bounty'))
+            return redirect(url_for('bounty', claimed='1'))
         elif saber_color=='red':
             return redirect(url_for('darth_vader_event', bounty_id=bounty_id))
     else:
