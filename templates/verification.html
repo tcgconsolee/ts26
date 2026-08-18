@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imperial Terminal — Bounty Verification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #FFD307;
+    --gold-bright: #FEE141;
+    --white: #FFFFFF;
+    --grey: #D9D9D9;
+    --grey-mid: #757575;
+    --grey-dark: #262626;
+    --black: #000000;
+    --red: #FF3333;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--black); }
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  .frame {
+    background: var(--black);
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 32px;
+  }
+
+  /* ===== TOP NAVBAR ===== */
+  .navbar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    border-bottom: 1px solid #2a2a2a;
+    margin-bottom: 30px;
+  }
+  .navbar a {
+    color: var(--white);
+    text-decoration: none;
+    text-align: center;
+    padding: 12px 0;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+    clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%);
+    margin-right: -1px;
+  }
+  .navbar a.active {
+    background: var(--white);
+    color: var(--black);
+    font-weight: 700;
+  }
+
+  /* ===== VERIFICATION BOX ===== */
+  .verify-container {
+    max-width: 600px;
+    margin: 0 auto;
+    border: 1px solid var(--gold);
+    padding: 30px;
+    position: relative;
+    background: #080808;
+  }
+
+  /* CORNER DOTS */
+  .corner {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+  }
+  .tl { top: 3px; left: 3px; }
+  .tr { top: 3px; right: 3px; }
+  .bl { bottom: 3px; left: 3px; }
+  .br { bottom: 3px; right: 3px; }
+
+  .title {
+    color: var(--gold);
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-align: center;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #222;
+    padding-bottom: 12px;
+  }
+
+  .flash-error {
+    background: rgba(255, 51, 51, 0.15);
+    border: 1px solid var(--red);
+    color: var(--red);
+    padding: 10px;
+    font-size: 11px;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    color: var(--grey-mid);
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+
+  .prompt-sentence {
+    font-size: 13px;
+    line-height: 2.2;
+    color: var(--white);
+    margin-bottom: 20px;
+    background: #111;
+    padding: 14px;
+    border-left: 3px solid var(--gold);
+  }
+
+  .inline-input {
+    display: inline-block;
+    width: 45%;
+    margin: 0 4px;
+    vertical-align: middle;
+  }
+
+  input[type="text"],
+  input[type="password"] {
+    width: 100%;
+    background: #000;
+    border: 1px solid #333;
+    color: var(--white);
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus,
+  input[type="password"]:focus {
+    border-color: var(--gold);
+  }
+
+  .btn-submit {
+    width: 100%;
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    padding: 12px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    margin-top: 10px;
+    text-transform: uppercase;
+  }
+
+  .btn-submit:hover {
+    background: var(--gold-bright);
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <!-- TOP NAVBAR -->
+  <div class="navbar">
+    <a href="{{ url_for('home') }}">Home</a>
+    <a href="{{ url_for('services') }}">Services</a>
+    <a href="{{ url_for('admin') }}">Admin</a>
+    <a href="{{ url_for('military') }}">Military</a>
+    <a href="{{ url_for('report') }}">Report</a>
+  </div>
+
+  <div class="verify-container">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+
+    <div class="title">// BOUNTY CLAIM VERIFICATION</div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-error">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('verify_bounty', bounty_id=bounty_id) }}" method="POST">
+      
+      <div class="prompt-sentence">
+        YOU ARE HUNTING 
+        <input type="text" name="target_name" placeholder="TARGET NAME" required class="inline-input">
+        AND LIGHTSABER IS OF COLOR 
+        <input type="text" name="saber_color" placeholder="COLOR" required class="inline-input">
+      </div>
+
+      <div class="form-group">
+        <label for="password">ENTER USER PASSWORD TO AUTHENTICATE CLAIM:</label>
+        <input type="password" id="password" name="password" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn-submit">CONFIRM CLAIM</button>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>
