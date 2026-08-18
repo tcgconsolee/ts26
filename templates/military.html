@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imperial Terminal — Military</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #FFD307;
+    --gold-bright: #FEE141;
+    --gold-dim: rgba(255, 211, 7, 0.15);
+    --gold-mid: rgba(255, 211, 7, 0.4);
+    --white: #FFFFFF;
+    --grey: #D9D9D9;
+    --grey-mid: #757575;
+    --grey-dark: #262626;
+    --black: #000000;
+    
+    /* 52% White on Black */
+    --border-dim: rgba(255, 255, 255, 0.52);
+  }
+  
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--black); }
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  .frame {
+    background: var(--black);
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 8px 16px;
+    box-sizing: border-box;
+  }
+
+  /* ===== MAIN GRID LAYOUT ===== */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  /* ===== LEFT PANEL (SYSTEM) ===== */
+  .left-panel {
+    border-right: 1px solid var(--grey-dark);
+    padding-right: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .sys-header {
+    display: flex;
+    justify-content: space-between;
+    color: var(--grey-mid);
+    font-size: 10px;
+    letter-spacing: 1px;
+    border-top: 1px solid #333;
+    padding-top: 4px;
+    margin-bottom: 4px;
+  }
+  .sys-header span:first-child::before { content: "|"; margin-right: 2px; }
+  .clock {
+    color: var(--gold);
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin: 2px 0 6px 0;
+  }
+  .tickrow {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 12px;
+  }
+  .tick {
+    width: 2px;
+    height: 6px;
+    background: #333;
+  }
+  .tick.on { background: var(--gold); }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    font-size: 9px;
+    margin-bottom: 12px;
+    row-gap: 2px;
+  }
+  .meta-grid .label { color: var(--grey-mid); letter-spacing: 0.5px; }
+  .meta-grid .val { color: var(--white); }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    color: var(--white);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .traffic-box {
+    height: 70px;
+    border: 1px solid var(--grey-dark);
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .net-status { margin-bottom: 10px; }
+  .net-status .row1 {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: var(--grey-mid);
+    margin-bottom: 2px;
+  }
+  .net-status .row2 {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+  }
+  .net-status .row2 .state { color: var(--white); }
+  .net-status .row2 .ip { color: var(--grey-mid); }
+  .net-status .row2 .ping { color: var(--white); }
+
+  .memory-box {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 60px;
+    margin-bottom: 12px;
+  }
+  .mbar { flex: 1; background: #2b2b2b; }
+  .mbar.gold { background: var(--gold); }
+
+  .rank-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9px;
+  }
+  .rank-table th {
+    text-align: left;
+    color: var(--grey-mid);
+    font-weight: 400;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--grey-dark);
+  }
+  .rank-table td { padding: 3px 0; color: var(--white); }
+  .rank-table td.dim { color: var(--grey-mid); }
+
+  /* ===== RIGHT MAIN CONTENT AREA ===== */
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  /* ===== TOP NAVBAR ===== */
+  .navbar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    border-bottom: 1px solid #2a2a2a;
+  }
+  .navbar a {
+    color: var(--white);
+    text-decoration: none;
+    text-align: center;
+    padding: 6px 0;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+    clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%);
+    margin-right: -1px;
+  }
+  .navbar a.active {
+    background: var(--white);
+    color: var(--black);
+    font-weight: 700;
+    z-index: 2;
+  }
+
+  /* ===== ENCASING OUTER BOX FOR VOLUNTEER CARDS ===== */
+  .cards-outer-panel {
+    border: 1px solid var(--border-dim);
+    background: #000;
+    padding: 8px;
+    position: relative;
+  }
+
+  /* ===== MILITARY CARDS ROW ===== */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  /* VECTOR CARD WRAPPER */
+  .mil-card-wrap {
+    position: relative;
+    width: 100%;
+    height: 250px;
+    background: #000;
+  }
+
+  .card-border-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .mil-card-content {
+    position: absolute;
+    inset: 0;
+    padding: 18px 12px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 2;
+  }
+
+  .card-title {
+    color: var(--gold);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-align: center;
+    text-transform: uppercase;
+    height: 24px;
+    display: flex;
+    align-items: center;
+  }
+
+  .icon-holder {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+  }
+  .icon-holder svg {
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 1.5;
+  }
+
+  .volunteer-btn {
+    width: 100%;
+    border-top: 1px dashed var(--gold);
+    border-bottom: 1px dashed var(--gold);
+    padding: 7px 0;
+    color: var(--gold);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .volunteer-btn:hover {
+    background: var(--gold);
+    color: var(--black);
+  }
+
+  /* ===== LOWER DASHBOARD GRID ===== */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  /* RADAR BOX */
+  .radar-box {
+    border: 1px solid var(--border-dim);
+    background: #030303;
+    width: 300px;
+    height: 300px;
+    position: relative;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .radar-canvas-wrap {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  #radarCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* RIGHT STATS & ANNOUNCEMENTS */
+  .stats-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+    height: 300px;
+  }
+
+  .top-panels-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* PANEL BOX GENERAL */
+  .panel-box {
+    border: 1px solid var(--border-dim);
+    background: #050505;
+    padding: 10px 12px;
+    position: relative;
+  }
+
+  .corner-dot {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: var(--gold);
+    z-index: 4;
+  }
+  .corner-tl { top: 2px; left: 2px; }
+  .corner-tr { top: 2px; right: 2px; }
+  .corner-bl { bottom: 2px; left: 2px; }
+  .corner-br { bottom: 2px; right: 2px; }
+
+  .panel-title {
+    color: var(--gold);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  /* FLEET STATUS TABLE */
+  .fleet-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9px;
+  }
+  .fleet-table td {
+    padding: 3px 0;
+    color: var(--grey-mid);
+  }
+  .fleet-table td:last-child {
+    text-align: right;
+    color: var(--white);
+    font-weight: 600;
+  }
+
+  /* MILITARY OVERVIEW STATS */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .stat-card {
+    border: 1px solid var(--border-dim);
+    background: #0a0a0a;
+    padding: 4px 6px;
+  }
+  .stat-card .lbl {
+    font-size: 7px;
+    color: var(--grey-mid);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .stat-card .val {
+    font-size: 12px;
+    color: var(--white);
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  /* ANNOUNCEMENTS BOX */
+  .announcements-box {
+    border: 1px solid var(--border-dim);
+    background: #050505;
+    padding: 10px 12px;
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .announcement-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .ann-row {
+    display: grid;
+    grid-template-columns: 65px 1fr 50px;
+    font-size: 9px;
+    color: var(--grey-mid);
+    line-height: 1.2;
+  }
+  .ann-row .time { color: var(--grey-mid); }
+  .ann-row .text { color: var(--grey-mid); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ann-row .status { text-align: right; color: var(--grey-mid); }
+  .ann-row.unread .text, .ann-row.unread .status { color: var(--white); }
+
+  @media (max-width: 1100px) {
+    body { overflow-y: auto; }
+    .layout { grid-template-columns: 1fr; }
+    .left-panel { border-right: none; border-bottom: 1px solid var(--grey-dark); padding-right: 0; padding-bottom: 16px; }
+    .cards-grid { grid-template-columns: repeat(2, 1fr); }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .stats-column { height: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="layout">
+
+    <!-- LEFT PANEL: SYSTEM -->
+    <div class="left-panel">
+      <div>
+        <div class="sys-header">
+          <span>SYSTEM</span>
+          <span>PANEL</span>
+        </div>
+        <div class="clock" id="live-time">19 : 37 : 19</div>
+        <div class="tickrow" id="tickrow"></div>
+
+        <div class="meta-grid">
+          <div class="label">DATE</div>
+          <div class="label">UPTIME</div>
+          <div class="label">TYPE</div>
+          <div class="label">POWER</div>
+          <div class="val">17SEP</div>
+          <div class="val">09d36:00</div>
+          <div class="val">HNET</div>
+          <div class="val">ON</div>
+        </div>
+
+        <div class="section-label">NETWORK TRAFFIC</div>
+        <div class="traffic-box">
+          <canvas id="trafficCanvas" style="width:100%;height:100%;display:block;"></canvas>
+        </div>
+
+        <div class="net-status">
+          <div class="row1">
+            <span>NETWORK STATUS</span>
+            <span>[wlp4l]</span>
+          </div>
+          <div class="row2">
+            <span class="state">STATE<br><span style="color:var(--white)">ACTIVE</span></span>
+            <span class="ip">IP<br>--</span>
+            <span class="ping">PING<br>482ms</span>
+          </div>
+        </div>
+
+        <div class="section-label">MEMORY USAGE</div>
+        <div class="memory-box" id="memoryBox"></div>
+      </div>
+
+      <div>
+        <div class="section-label">CITIZEN RANK</div>
+        <table class="rank-table">
+          <thead>
+            <tr><th>NAME</th><th>VOLUNTEERED</th><th>REPORTS</th></tr>
+          </thead>
+          <tbody id="rankBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: MILITARY COMMAND -->
+    <div class="main-content">
+      
+      <!-- TOP NAVIGATION -->
+      <div class="navbar">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('services') }}">Services</a>
+        <a href="{{ url_for('admin') }}">Admin</a>
+        <a href="{{ url_for('military') }}" class="active">Military</a>
+        <a href="{{ url_for('report') }}">Report</a>
+      </div>
+
+      <!-- ENCASING PANEL BOX -->
+      <div class="cards-outer-panel">
+        <div class="corner-dot corner-tl"></div>
+        <div class="corner-dot corner-tr"></div>
+        <div class="corner-dot corner-bl"></div>
+        <div class="corner-dot corner-br"></div>
+
+        <!-- CARDS ROW: 4 BRANCHES -->
+        <div class="cards-grid">
+          
+          <!-- CARD 1 -->
+          <div class="mil-card-wrap">
+            <svg class="card-border-svg" viewBox="0 0 200 250" preserveAspectRatio="none">
+              <path d="M 16,1 L 184,1 L 199,16 L 199,102 L 191,110 L 191,140 L 199,148 L 199,234 L 184,249 L 16,249 L 1,234 L 1,148 L 9,140 L 9,110 L 1,102 L 1,16 Z" 
+                    fill="none" stroke="#FFD307" stroke-width="1.5" stroke-linejoin="miter"/>
+            </svg>
+            <div class="mil-card-content">
+              <div class="card-title">STORMTROOPER CORPS</div>
+              <div class="icon-holder">
+                <svg viewBox="0 0 100 100">
+                  <path d="M 25 45 C 25 15, 75 15, 75 45 C 75 55, 72 70, 68 78 L 32 78 C 28 70, 25 55, 25 45 Z" stroke="#FFD307" stroke-width="2.5" fill="none"/>
+                  <path d="M 30 46 L 46 50 L 54 50 L 70 46 L 73 54 L 62 57 L 38 57 L 27 54 Z" fill="#FFD307"/>
+                  <path d="M 40 64 L 60 64 L 57 70 L 43 70 Z" stroke="#FFD307" stroke-width="1.5" fill="none"/>
+                  <circle cx="34" cy="71" r="3.5" fill="#FFD307"/>
+                  <circle cx="66" cy="71" r="3.5" fill="#FFD307"/>
+                  <path d="M 26 42 L 74 42" stroke="#FFD307" stroke-width="2"/>
+                </svg>
+              </div>
+              <a href="{{ url_for('volunteer', branch='Stormtrooper Corps') }}" class="volunteer-btn">VOLUNTEER NOW &gt;</a>
+            </div>
+          </div>
+
+          <!-- CARD 2 -->
+          <div class="mil-card-wrap">
+            <svg class="card-border-svg" viewBox="0 0 200 250" preserveAspectRatio="none">
+              <path d="M 16,1 L 184,1 L 199,16 L 199,102 L 191,110 L 191,140 L 199,148 L 199,234 L 184,249 L 16,249 L 1,234 L 1,148 L 9,140 L 9,110 L 1,102 L 1,16 Z" 
+                    fill="none" stroke="#FFD307" stroke-width="1.5" stroke-linejoin="miter"/>
+            </svg>
+            <div class="mil-card-content">
+              <div class="card-title">PILOTS</div>
+              <div class="icon-holder">
+                <svg viewBox="0 0 100 100">
+                  <path d="M 22 42 C 22 15, 78 15, 78 42 C 78 58, 75 75, 70 80 L 30 80 C 25 75, 22 58, 22 42 Z" stroke="#FFD307" stroke-width="2.5" fill="none"/>
+                  <path d="M 26 42 L 74 42 L 70 54 L 30 54 Z" stroke="#FFD307" stroke-width="2" fill="none"/>
+                  <circle cx="38" cy="48" r="4" fill="#FFD307"/>
+                  <circle cx="62" cy="48" r="4" fill="#FFD307"/>
+                  <circle cx="50" cy="28" r="7" stroke="#FFD307" stroke-width="1.5" fill="none"/>
+                  <path d="M 50 21 L 50 35 M 43 28 L 57 28" stroke="#FFD307" stroke-width="1.5"/>
+                  <path d="M 38 72 L 38 84 M 62 72 L 62 84" stroke="#FFD307" stroke-width="3"/>
+                </svg>
+              </div>
+              <a href="{{ url_for('volunteer', branch='Imperial Pilots') }}" class="volunteer-btn">VOLUNTEER NOW &gt;</a>
+            </div>
+          </div>
+
+          <!-- CARD 3 -->
+          <div class="mil-card-wrap">
+            <svg class="card-border-svg" viewBox="0 0 200 250" preserveAspectRatio="none">
+              <path d="M 16,1 L 184,1 L 199,16 L 199,102 L 191,110 L 191,140 L 199,148 L 199,234 L 184,249 L 16,249 L 1,234 L 1,148 L 9,140 L 9,110 L 1,102 L 1,16 Z" 
+                    fill="none" stroke="#FFD307" stroke-width="1.5" stroke-linejoin="miter"/>
+            </svg>
+            <div class="mil-card-content">
+              <div class="card-title">INQUISITORIUS</div>
+              <div class="icon-holder">
+                <svg viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="32" stroke="#FFD307" stroke-width="2.5" fill="none"/>
+                  <circle cx="50" cy="50" r="22" stroke="#FFD307" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
+                  <path d="M 50 10 L 50 90" stroke="#FFD307" stroke-width="3"/>
+                  <path d="M 10 50 L 90 50" stroke="#FFD307" stroke-width="1.5"/>
+                  <polygon points="50,12 45,24 55,24" fill="#FFD307"/>
+                  <polygon points="50,88 45,76 55,76" fill="#FFD307"/>
+                  <circle cx="50" cy="50" r="6" fill="#FFD307"/>
+                </svg>
+              </div>
+              <a href="{{ url_for('volunteer', branch='Inquisitorius') }}" class="volunteer-btn">VOLUNTEER NOW &gt;</a>
+            </div>
+          </div>
+
+          <!-- CARD 4 -->
+          <div class="mil-card-wrap">
+            <svg class="card-border-svg" viewBox="0 0 200 250" preserveAspectRatio="none">
+              <path d="M 16,1 L 184,1 L 199,16 L 199,102 L 191,110 L 191,140 L 199,148 L 199,234 L 184,249 L 16,249 L 1,234 L 1,148 L 9,140 L 9,110 L 1,102 L 1,16 Z" 
+                    fill="none" stroke="#FFD307" stroke-width="1.5" stroke-linejoin="miter"/>
+            </svg>
+            <div class="mil-card-content">
+              <div class="card-title">AT-AT DRIVERS</div>
+              <div class="icon-holder">
+                <svg viewBox="0 0 100 100">
+                  <path d="M 24 45 C 24 18, 76 18, 76 45 C 76 55, 72 74, 68 80 L 32 80 C 28 74, 24 55, 24 45 Z" stroke="#FFD307" stroke-width="2.5" fill="none"/>
+                  <rect x="28" y="40" width="18" height="10" rx="2" stroke="#FFD307" stroke-width="1.5" fill="none"/>
+                  <rect x="54" y="40" width="18" height="10" rx="2" stroke="#FFD307" stroke-width="1.5" fill="none"/>
+                  <line x1="46" y1="45" x2="54" y2="45" stroke="#FFD307" stroke-width="2"/>
+                  <path d="M 40 56 L 60 56 L 56 74 L 44 74 Z" stroke="#FFD307" stroke-width="1.5" fill="none"/>
+                  <line x1="50" y1="56" x2="50" y2="74" stroke="#FFD307" stroke-width="1.5"/>
+                  <path d="M 36 80 L 36 88 M 64 80 L 64 88" stroke="#FFD307" stroke-width="2"/>
+                </svg>
+              </div>
+              <a href="{{ url_for('volunteer', branch='AT-AT Drivers') }}" class="volunteer-btn">VOLUNTEER NOW &gt;</a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- LOWER DASHBOARD: RADAR & STATS -->
+      <div class="dashboard-grid">
+        
+        <!-- RADAR DISPLAY -->
+        <div class="radar-box">
+          <div class="corner-dot corner-tl"></div>
+          <div class="corner-dot corner-tr"></div>
+          <div class="corner-dot corner-bl"></div>
+          <div class="corner-dot corner-br"></div>
+          <div class="radar-canvas-wrap">
+            <canvas id="radarCanvas"></canvas>
+          </div>
+        </div>
+
+        <!-- STATS & ANNOUNCEMENTS COLUMN -->
+        <div class="stats-column">
+          
+          <div class="top-panels-grid">
+            <!-- FLEET STATUS -->
+            <div class="panel-box">
+              <div class="corner-dot corner-tl"></div>
+              <div class="corner-dot corner-tr"></div>
+              <div class="corner-dot corner-bl"></div>
+              <div class="corner-dot corner-br"></div>
+              <div class="panel-title">FLEET STATUS</div>
+              <table class="fleet-table">
+                <tr><td>STAR DESTROYERS</td><td>128</td></tr>
+                <tr><td>CRUISERS</td><td>356</td></tr>
+                <tr><td>FRIGATES</td><td>1245</td></tr>
+                <tr><td>TIE FIGHTERS</td><td>2463</td></tr>
+                <tr><td>SUPPLY SHIPS</td><td>1457</td></tr>
+              </table>
+            </div>
+
+            <!-- MILITARY OVERVIEW -->
+            <div class="panel-box">
+              <div class="corner-dot corner-tl"></div>
+              <div class="corner-dot corner-tr"></div>
+              <div class="corner-dot corner-bl"></div>
+              <div class="corner-dot corner-br"></div>
+              <div class="panel-title">MILITARY OVERVIEW</div>
+              <div class="overview-grid">
+                <div class="stat-card">
+                  <div class="lbl">REGISTERED</div>
+                  <div class="val">1284</div>
+                </div>
+                <div class="stat-card">
+                  <div class="lbl">ACTIVE COLONIES</div>
+                  <div class="val">312</div>
+                </div>
+                <div class="stat-card">
+                  <div class="lbl">TOTAL POPULATION</div>
+                  <div class="val">2.7T</div>
+                </div>
+                <div class="stat-card">
+                  <div class="lbl">CURRENTLY DEPLOYED</div>
+                  <div class="val">47K</div>
+                </div>
+                <div class="stat-card">
+                  <div class="lbl">AVG SECURITY TIER</div>
+                  <div class="val" style="font-size:10px; margin-top:2px;">HIGH</div>
+                </div>
+                <div class="stat-card">
+                  <div class="lbl">% SURVEILLED</div>
+                  <div class="val">76</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ANNOUNCEMENTS BOX -->
+          <div class="announcements-box">
+            <div class="corner-dot corner-tl"></div>
+            <div class="corner-dot corner-tr"></div>
+            <div class="corner-dot corner-bl"></div>
+            <div class="corner-dot corner-br"></div>
+            <div class="panel-title">ANNOUNCEMENTS</div>
+            <div class="announcement-list">
+              <div class="ann-row unread">
+                <span class="time">17:41:11</span>
+                <span class="text">NEW COLONY ESTABLISHED IN SECTOR 7...</span>
+                <span class="status">UNREAD</span>
+              </div>
+              <div class="ann-row unread">
+                <span class="time">17:41:11</span>
+                <span class="text">JEDI TERRORISTS SPOTTED IN CORUSCANT</span>
+                <span class="status">UNREAD</span>
+              </div>
+              <div class="ann-row">
+                <span class="time">17:41:11</span>
+                <span class="text">PATROL SQUADRON DISPATCHED TO SUB-GRID</span>
+                <span class="status">READ</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* LIVE CLOCK */
+function updateClock(){
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2,"0");
+  const m = now.getMinutes().toString().padStart(2,"0");
+  const s = now.getSeconds().toString().padStart(2,"0");
+  document.getElementById("live-time").textContent = `${h} : ${m} : ${s}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* TICK ROW */
+const tickrow = document.getElementById("tickrow");
+for(let i=0;i<54;i++){
+  const t = document.createElement("div");
+  t.className = "tick" + (i < 10 ? " on" : "");
+  tickrow.appendChild(t);
+}
+
+/* NETWORK TRAFFIC CHART */
+const trafficCanvas = document.getElementById("trafficCanvas");
+const tctx = trafficCanvas.getContext("2d");
+function resizeTraffic(){
+  trafficCanvas.width = trafficCanvas.offsetWidth;
+  trafficCanvas.height = trafficCanvas.offsetHeight;
+}
+resizeTraffic();
+let trafficData = Array(24).fill(0).map(()=>Math.random());
+function drawTraffic(){
+  const w = trafficCanvas.width, h = trafficCanvas.height;
+  tctx.clearRect(0,0,w,h);
+  tctx.strokeStyle = "#1e1e1e";
+  tctx.lineWidth = 1;
+  for(let i=1;i<4;i++){
+    tctx.beginPath();
+    tctx.moveTo(0, (h/4)*i);
+    tctx.lineTo(w, (h/4)*i);
+    tctx.stroke();
+  }
+  for(let i=1;i<6;i++){
+    tctx.beginPath();
+    tctx.moveTo((w/6)*i, 0);
+    tctx.lineTo((w/6)*i, h);
+    tctx.stroke();
+  }
+  trafficData.shift();
+  trafficData.push(Math.random());
+  tctx.beginPath();
+  tctx.strokeStyle = "#FFD307";
+  tctx.lineWidth = 1.5;
+  const step = w/trafficData.length;
+  trafficData.forEach((v,i)=>{
+    const x = i*step;
+    const y = h - (v*h*0.85) - h*0.05;
+    i===0 ? tctx.moveTo(x,y) : tctx.lineTo(x,y);
+  });
+  tctx.stroke();
+  requestAnimationFrame(drawTraffic);
+}
+drawTraffic();
+
+/* MEMORY USAGE BARS */
+const memoryBox = document.getElementById("memoryBox");
+const bars = [];
+for(let i=0;i<36;i++){
+  const b = document.createElement("div");
+  b.className = "mbar" + (Math.random() > 0.75 ? " gold" : "");
+  b.style.height = (10 + Math.random()*90) + "%";
+  memoryBox.appendChild(b);
+  bars.push(b);
+}
+setInterval(()=>{
+  bars.forEach(b=>{
+    b.style.height = (10 + Math.random()*90) + "%";
+    b.className = "mbar" + (Math.random() > 0.8 ? " gold" : "");
+  });
+}, 1400);
+
+/* FETCH REAL CITIZEN RANKS FROM FLASK ENDPOINT */
+async function loadRanks() {
+  const rankBody = document.getElementById("rankBody");
+  try {
+    const res = await fetch('/api/users/ranks');
+    const data = await res.json();
+    rankBody.innerHTML = '';
+    data.slice(0, 5).forEach(u => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${u.username}</td><td class="dim">${u.volunteered}</td><td class="dim">${u.reports}</td>`;
+      rankBody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error('Failed to load ranks:', err);
+  }
+}
+loadRanks();
+
+/* RADAR SWEEP ANIMATION */
+const radarCanvas = document.getElementById("radarCanvas");
+const rctx = radarCanvas.getContext("2d");
+
+function resizeRadar(){
+  const rect = radarCanvas.parentElement.getBoundingClientRect();
+  radarCanvas.width = rect.width;
+  radarCanvas.height = rect.height;
+}
+resizeRadar();
+window.addEventListener("resize", ()=>{
+  resizeTraffic();
+  resizeRadar();
+});
+
+let angle = 0;
+const blips = [
+  { r: 0.65, a: 0.8 },
+  { r: 0.25, a: 1.5 },
+  { r: 0.40, a: 2.1 },
+  { r: 0.45, a: 2.2 },
+  { r: 0.85, a: 3.8 },
+  { r: 0.55, a: 4.5 },
+  { r: 0.70, a: 5.2 },
+  { r: 0.80, a: 5.8 }
+];
+
+function drawRadar(){
+  const w = radarCanvas.width;
+  const h = radarCanvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const maxR = Math.min(w, h) / 2 - 4;
+
+  rctx.clearRect(0,0,w,h);
+
+  const ringCount = 6;
+  for(let i=1; i<=ringCount; i++){
+    const r = (maxR / ringCount) * i;
+    rctx.beginPath();
+    rctx.arc(cx, cy, r, 0, Math.PI * 2);
+    rctx.fillStyle = `rgba(255, 211, 7, ${0.03 * i})`;
+    rctx.fill();
+    rctx.strokeStyle = "rgba(255, 211, 7, 0.25)";
+    rctx.lineWidth = 1;
+    rctx.stroke();
+  }
+
+  rctx.beginPath();
+  rctx.moveTo(cx - maxR, cy); rctx.lineTo(cx + maxR, cy);
+  rctx.moveTo(cx, cy - maxR); rctx.lineTo(cx, cy + maxR);
+  rctx.strokeStyle = "rgba(255, 211, 7, 0.2)";
+  rctx.stroke();
+
+  rctx.save();
+  rctx.translate(cx, cy);
+  rctx.rotate(angle);
+
+  const gradient = rctx.createRadialGradient(0, 0, 0, 0, 0, maxR);
+  gradient.addColorStop(0, "rgba(255, 211, 7, 0.4)");
+  gradient.addColorStop(1, "rgba(255, 211, 7, 0.05)");
+
+  rctx.beginPath();
+  rctx.moveTo(0,0);
+  rctx.arc(0, 0, maxR, -0.4, 0);
+  rctx.closePath();
+  rctx.fillStyle = gradient;
+  rctx.fill();
+
+  rctx.beginPath();
+  rctx.moveTo(0,0);
+  rctx.lineTo(maxR, 0);
+  rctx.strokeStyle = "#FFD307";
+  rctx.lineWidth = 1.5;
+  rctx.stroke();
+
+  rctx.restore();
+
+  blips.forEach(b => {
+    const bx = cx + Math.cos(b.a) * (b.r * maxR);
+    const by = cy + Math.sin(b.a) * (b.r * maxR);
+    
+    rctx.beginPath();
+    rctx.arc(bx, by, 3, 0, Math.PI * 2);
+    rctx.fillStyle = "#FFFFFF";
+    rctx.shadowColor = "#FFD307";
+    rctx.shadowBlur = 6;
+    rctx.fill();
+    rctx.shadowBlur = 0;
+  });
+
+  angle += 0.025;
+  requestAnimationFrame(drawRadar);
+}
+drawRadar();
+</script>
+
+</body>
+</html>

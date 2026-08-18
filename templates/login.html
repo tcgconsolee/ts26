@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            background: #000;
+        }
+
+        .img-section {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 60vw;
+        }
+
+        .img-section .tyler {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            height: 90%;
+        }
+
+        .line {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100vh;
+
+        }
+
+        .right-section {
+            position: absolute;
+            right: 0;
+            width: 40vw;
+            height: 100vh;
+
+        }
+
+        .login-container,
+        .flicker1 {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 10vh;
+        }
+
+        .flicker1 {
+            top: 4.25vh;
+        }
+
+        #login {
+            height: 9vh;
+        }
+
+        .flicker1 img {
+            height: 20vh;
+        }
+
+        #uname,
+        #psw {
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translate(-50%);
+            background: none;
+            border: none;
+            outline: none;
+            height: 70%;
+            width: 100%;
+            border-radius: 20px;
+            padding-left: 2vw;
+        }
+
+        input {
+            border: none;
+            outline: none;
+            background: none;
+            color: #fff;
+            font-family: 's';
+        }
+
+        input:focus {
+            outline: none;
+            border: none;
+        }
+
+        .uname-container {
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%);
+            top: 35vh;
+
+        }
+
+        .psw-container {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 50vh;
+        }
+
+        #username {
+            height: 10vh;
+        }
+
+        #password {
+            height: 10vh;
+        }
+
+        .submit-container {
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%);
+            top: 70vh;
+        }
+
+        #submit {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 100%;
+            border-radius: 20px;
+        }
+
+        #submitb {
+            height: 13.5vh;
+        }
+
+        .group {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50vw;
+            height: 100vh;
+            object-fit: cover;
+        }
+
+        .tylerdurden {
+            position: absolute;
+            opacity: 0.035;
+            width: 100vw;
+            height: 100vw;
+            font-family: 's';
+            font-weight: 800;
+            font-size: 6vw;
+            color: #fff;
+            z-index: -1;
+            word-break: break-all;
+        }
+        #flicker {
+            transition: opacity 0.05s ease;
+        }
+    </style>
+</head>
+
+<body style="overflow:hidden">
+    <div class="img-section">
+        <img src="../static/imgs/tyler.png" alt="" class="tyler">
+        <img src="../static/imgs/line.svg" alt="" class="line">
+    </div>
+    <form class="right-section" method="POST">
+        <div class="login-container">
+            <img src="../static/imgs/login.svg" alt="" id="login">
+        </div>
+        <div class="uname-container">
+            <img src="../static/imgs/username.svg" alt="" id="username">
+            <input type="text" name="uname" id="uname">
+        </div>
+        <div class="psw-container">
+            <img src="../static/imgs/password.svg" alt="" id="password">
+            <input type="text" name="psw" id="psw">
+        </div>
+        <div class="submit-container">
+            <img src="../static/imgs/submit.svg" alt="" id="submitb">
+            <input type="submit" name="submit" id="submit" value="">
+        </div>
+        <div class="flicker1" id ="flicker">
+            <img src="../static/imgs/flicker1.svg" alt="">
+        </div>
+    </form>
+    <img src="../static/imgs/group.svg" alt="" class="group">
+    <script>
+    const element = document.getElementById("flicker");
+
+    function flicker() {
+        // Randomly choose how visible it is
+        element.style.opacity = Math.random() > 0.25
+        ? (0.7 + Math.random() * 0.3)
+        : (0.1 + Math.random() * 0.4);
+
+        // Random delay before the next flicker
+        const delay = 30 + Math.random() * 250;
+
+        setTimeout(flicker, delay);
+    }
+
+    flicker();
+    </script>
+</body>
+
+</html>

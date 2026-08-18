@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imperial Terminal — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #FFD307;
+    --gold-bright: #FEE141;
+    --gold-dim: rgba(255, 211, 7, 0.15);
+    --gold-mid: rgba(255, 211, 7, 0.4);
+    --white: #FFFFFF;
+    --grey: #D9D9D9;
+    --grey-mid: #757575;
+    --grey-dark: #262626;
+    --black: #000000;
+    --border-dim: rgba(255, 255, 255, 0.52);
+  }
+  
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--black); }
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  .frame {
+    background: var(--black);
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 8px 16px;
+    box-sizing: border-box;
+  }
+
+  /* ===== MAIN GRID LAYOUT ===== */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  /* ===== LEFT PANEL (SYSTEM) ===== */
+  .left-panel {
+    border-right: 1px solid var(--grey-dark);
+    padding-right: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .sys-header {
+    display: flex;
+    justify-content: space-between;
+    color: var(--grey-mid);
+    font-size: 10px;
+    letter-spacing: 1px;
+    border-top: 1px solid #333;
+    padding-top: 4px;
+    margin-bottom: 4px;
+  }
+  .sys-header span:first-child::before { content: "|"; margin-right: 2px; }
+  .clock {
+    color: var(--gold);
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin: 2px 0 6px 0;
+  }
+  .tickrow {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 12px;
+  }
+  .tick {
+    width: 2px;
+    height: 6px;
+    background: #333;
+  }
+  .tick.on { background: var(--gold); }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    font-size: 9px;
+    margin-bottom: 12px;
+    row-gap: 2px;
+  }
+  .meta-grid .label { color: var(--grey-mid); letter-spacing: 0.5px; }
+  .meta-grid .val { color: var(--white); }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    color: var(--white);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .traffic-box {
+    height: 70px;
+    border: 1px solid var(--grey-dark);
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .net-status { margin-bottom: 10px; }
+  .net-status .row1 {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: var(--grey-mid);
+    margin-bottom: 2px;
+  }
+  .net-status .row2 {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+  }
+  .net-status .row2 .state { color: var(--white); }
+  .net-status .row2 .ip { color: var(--grey-mid); }
+  .net-status .row2 .ping { color: var(--white); }
+
+  .memory-box {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 60px;
+    margin-bottom: 12px;
+  }
+  .mbar { flex: 1; background: #2b2b2b; }
+  .mbar.gold { background: var(--gold); }
+
+  .rank-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9px;
+  }
+  .rank-table th {
+    text-align: left;
+    color: var(--grey-mid);
+    font-weight: 400;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--grey-dark);
+  }
+  .rank-table td { padding: 3px 0; color: var(--white); }
+  .rank-table td.dim { color: var(--grey-mid); }
+
+  /* ===== RIGHT MAIN CONTENT AREA ===== */
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  /* ===== TOP NAVBAR ===== */
+  .navbar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    border-bottom: 1px solid #2a2a2a;
+  }
+  .navbar a {
+    color: var(--white);
+    text-decoration: none;
+    text-align: center;
+    padding: 6px 0;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+    clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%);
+    margin-right: -1px;
+  }
+  .navbar a.active {
+    background: var(--white);
+    color: var(--black);
+    font-weight: 700;
+    z-index: 2;
+  }
+
+  /* ===== ADMIN DISPLAY VIEW ===== */
+  .admin-display {
+    height: 560px;
+    border: 1px solid var(--gold);
+    position: relative;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .admin-text {
+    color: var(--gold);
+    font-size: 38px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    line-height: 1.3;
+  }
+
+  /* YELLOW CORNER DOTS/BRACKETS */
+  .corner-square {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--gold);
+    z-index: 10;
+  }
+  .corner-square.tl { top: 2px; left: 2px; }
+  .corner-square.tr { top: 2px; right: 2px; }
+  .corner-square.bl { bottom: 2px; left: 2px; }
+  .corner-square.br { bottom: 2px; right: 2px; }
+
+  @media (max-width: 1100px) {
+    body { overflow-y: auto; }
+    .layout { grid-template-columns: 1fr; }
+    .left-panel { border-right: none; border-bottom: 1px solid var(--grey-dark); padding-right: 0; padding-bottom: 16px; }
+    .admin-display { height: 400px; }
+    .admin-text { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="layout">
+
+    <!-- LEFT PANEL: SYSTEM -->
+    <div class="left-panel">
+      <div>
+        <div class="sys-header">
+          <span>SYSTEM</span>
+          <span>PANEL</span>
+        </div>
+        <div class="clock" id="live-time">10 : 27 : 59</div>
+        <div class="tickrow" id="tickrow"></div>
+
+        <div class="meta-grid">
+          <div class="label">DATE</div>
+          <div class="label">UPTIME</div>
+          <div class="label">TYPE</div>
+          <div class="label">POWER</div>
+          <div class="val">{{ system.date if system and system.date else '17SEP' }}</div>
+          <div class="val">{{ system.uptime if system and system.uptime else '09d36:00' }}</div>
+          <div class="val">{{ system.type if system and system.type else 'HNET' }}</div>
+          <div class="val">{{ system.power if system and system.power else 'ON' }}</div>
+        </div>
+
+        <div class="section-label">NETWORK TRAFFIC</div>
+        <div class="traffic-box">
+          <canvas id="trafficCanvas" style="width:100%;height:100%;display:block;"></canvas>
+        </div>
+
+        <div class="net-status">
+          <div class="row1">
+            <span>NETWORK STATUS</span>
+            <span>[Interface: {{ system.net_interface if system and system.net_interface else 'wlp4L' }}]</span>
+          </div>
+          <div class="row2">
+            <span class="state">STATE<br><span style="color:var(--white)">{{ system.net_state if system and system.net_state else 'ACTIVE' }}</span></span>
+            <span class="ip">IP<br>{{ system.ip if system and system.ip else '--' }}</span>
+            <span class="ping">PING<br>{{ system.ping if system and system.ping else '482ms' }}</span>
+          </div>
+        </div>
+
+        <div class="section-label">MEMORY USAGE</div>
+        <div class="memory-box" id="memoryBox"></div>
+      </div>
+
+      <div>
+        <div class="section-label">CITIZEN RANK</div>
+        <table class="rank-table">
+          <thead>
+            <tr><th>NAME</th><th>VOLUNTEERED</th><th>REPORTS</th></tr>
+          </thead>
+          <tbody id="rankBody">
+            {% if citizen_ranks %}
+              {% for rank in citizen_ranks %}
+                <tr>
+                  <td>{{ rank.name }}</td>
+                  <td class="dim">{{ rank.volunteered }}</td>
+                  <td class="dim">{{ rank.reports }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              {% for i in range(7) %}
+                <tr><td>NAME</td><td class="dim">61D</td><td class="dim">107</td></tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: ADMIN VIEW -->
+    <div class="main-content">
+      
+      <!-- TOP NAVIGATION -->
+      <div class="navbar">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('services') }}">Services</a>
+        <a href="{{ url_for('admin') }}" class="active">Admin</a>
+        <a href="{{ url_for('military') }}">Military</a>
+        <a href="{{ url_for('report') }}">Report</a>
+      </div>
+
+      <!-- MAIN ADMIN CONTENT AREA -->
+      <div class="admin-display">
+        <div class="corner-square tl"></div>
+        <div class="corner-square tr"></div>
+        <div class="corner-square bl"></div>
+        <div class="corner-square br"></div>
+
+        <div class="admin-text">
+          galaxy vala<br>thingy
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* LIVE CLOCK */
+function updateClock(){
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2,"0");
+  const m = now.getMinutes().toString().padStart(2,"0");
+  const s = now.getSeconds().toString().padStart(2,"0");
+  const clockEl = document.getElementById("live-time");
+  if (clockEl) {
+    clockEl.textContent = `${h} : ${m} : ${s}`;
+  }
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* TICK ROW */
+const tickrow = document.getElementById("tickrow");
+if (tickrow) {
+  for(let i=0;i<54;i++){
+    const t = document.createElement("div");
+    t.className = "tick" + (i < 10 ? " on" : "");
+    tickrow.appendChild(t);
+  }
+}
+
+/* NETWORK TRAFFIC CHART */
+const trafficCanvas = document.getElementById("trafficCanvas");
+const tctx = trafficCanvas ? trafficCanvas.getContext("2d") : null;
+function resizeTraffic(){
+  if (!trafficCanvas) return;
+  trafficCanvas.width = trafficCanvas.offsetWidth;
+  trafficCanvas.height = trafficCanvas.offsetHeight;
+}
+
+if (trafficCanvas) {
+  resizeTraffic();
+  let trafficData = Array(24).fill(0).map(()=>Math.random());
+  function drawTraffic(){
+    const w = trafficCanvas.width, h = trafficCanvas.height;
+    tctx.clearRect(0,0,w,h);
+    tctx.strokeStyle = "#1e1e1e";
+    tctx.lineWidth = 1;
+    for(let i=1;i<4;i++){
+      tctx.beginPath();
+      tctx.moveTo(0, (h/4)*i);
+      tctx.lineTo(w, (h/4)*i);
+      tctx.stroke();
+    }
+    for(let i=1;i<6;i++){
+      tctx.beginPath();
+      tctx.moveTo((w/6)*i, 0);
+      tctx.lineTo((w/6)*i, h);
+      tctx.stroke();
+    }
+    trafficData.shift();
+    trafficData.push(Math.random());
+    tctx.beginPath();
+    tctx.strokeStyle = "#FFD307";
+    tctx.lineWidth = 1.5;
+    const step = w/trafficData.length;
+    trafficData.forEach((v,i)=>{
+      const x = i*step;
+      const y = h - (v*h*0.85) - h*0.05;
+      i===0 ? tctx.moveTo(x,y) : tctx.lineTo(x,y);
+    });
+    tctx.stroke();
+    requestAnimationFrame(drawTraffic);
+  }
+  drawTraffic();
+}
+
+/* MEMORY USAGE BARS */
+const memoryBox = document.getElementById("memoryBox");
+if (memoryBox) {
+  const bars = [];
+  for(let i=0;i<36;i++){
+    const b = document.createElement("div");
+    b.className = "mbar" + (Math.random() > 0.75 ? " gold" : "");
+    b.style.height = (10 + Math.random()*90) + "%";
+    memoryBox.appendChild(b);
+    bars.push(b);
+  }
+  setInterval(()=>{
+    bars.forEach(b=>{
+      b.style.height = (10 + Math.random()*90) + "%";
+      b.className = "mbar" + (Math.random() > 0.8 ? " gold" : "");
+    });
+  }, 1400);
+}
+
+window.addEventListener("resize", ()=>{
+  resizeTraffic();
+});
+</script>
+
+</body>
+</html>

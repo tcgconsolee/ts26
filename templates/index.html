@@ -24,9 +24,10 @@
     background:var(--black);
     font-family:'JetBrains Mono', monospace;
     color:var(--white);
-    min-height:100vh;
+    height:100vh;
     margin:0;
     padding:0;
+    overflow:hidden
   }
   .frame{
     background:var(--black);
@@ -52,27 +53,20 @@
     letter-spacing:1px;
     text-transform:uppercase;
     position:relative;
-  }
-  .navbar a:not(:last-child)::after{
-    content:"";
-    position:absolute;
-    right:0;
-    top:20%;
-    height:60%;
-    width:1px;
-    background:#2a2a2a;
-    transform:skewX(-20deg);
+    clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%);
+    margin-right:-1px;
   }
   .navbar a.active{
     background:var(--white);
     color:var(--black);
     font-weight:700;
+    z-index:2;
   }
 
   /* ===== MAIN GRID ===== */
   .layout{
     display:grid;
-    grid-template-columns: 220px 1fr 220px;
+    grid-template-columns: 320px 1fr 400px;
     gap:32px;
   }
 
@@ -190,14 +184,14 @@
   }
   .headline{
     color:var(--gold);
-    font-size:19px;
+    font-size: 28px;
     font-weight:700;
     letter-spacing:0.3px;
     border-bottom:1px solid #333;
     padding-bottom:10px;
     margin:0 0 14px 0;
+    text-align:center
   }
-  .headline .prefix{ color:var(--gold); }
   .media-wrap{
     position:relative;
     width:100%;
@@ -247,7 +241,7 @@
 
   .log-label{
     font-size:12px;
-    color:var(--grey);
+    color:var(--gold);
     letter-spacing:0.5px;
     margin-bottom:6px;
   }
@@ -257,7 +251,7 @@
   }
   .log-row{
     display:grid;
-    grid-template-columns: 40px 90px 1fr;
+    grid-template-columns: 60px 90px 1fr;
     gap:12px;
     font-size:10.5px;
     padding:6px 8px;
@@ -265,17 +259,15 @@
   }
   .log-row.hot{
     background:#161616;
-    color:var(--gold-bright);
+    color:var(--white);
   }
   .log-row.hot .time,
-  .log-row.hot .loc{ color:var(--gold-bright); }
+  .log-row.hot .loc{ color:var(--white); }
   .log-row .time{ color:#8a8a8a; }
   .log-row .loc{ color:#c9c9c9; letter-spacing:0.5px; }
   .log-row .msg{ color:inherit; }
-  .log-row.faded{ opacity:0.35; }
 
   /* ===== RIGHT PANEL ===== */
-  .right-panel{}
   .bounty-title{
     font-size:20px;
     letter-spacing:1px;
@@ -283,13 +275,52 @@
     text-align:center;
     margin:2px 0 18px 0;
   }
+  .bounty-title a{
+    color:var(--white);
+    text-decoration:none;
+  }
+  .bounty-title a:hover{
+    color:var(--gold);
+  }
   .bounty-frame{
     position:relative;
     width:100%;
     aspect-ratio:1/0.78;
     margin-bottom:18px;
+    border:1px solid var(--grey);
+    background:#000;
+    overflow:hidden;
   }
-  .bounty-frame svg{ width:100%; height:100%; display:block; }
+  .bounty-frame img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    filter: sepia(0.8) saturate(2) hue-rotate(-10deg) brightness(0.9) contrast(1.1);
+  }
+  /* Yellow corner brackets overlay */
+  .bounty-frame::before,
+  .bounty-frame::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--gold);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .bounty-frame::before {
+    top: 4px;
+    left: 4px;
+    border-right: none;
+    border-bottom: none;
+  }
+  .bounty-frame::after {
+    top: 4px;
+    right: 4px;
+    border-left: none;
+    border-bottom: none;
+  }
 
   .stat-grid{
     display:grid;
@@ -326,6 +357,7 @@
     font-size:10px;
     letter-spacing:1px;
     color:var(--white);
+    text-decoration:none;
   }
   .ability-btn::before{
     content:"";
@@ -350,12 +382,13 @@
 
 <div class="frame">
 
+  <!-- TOP NAVIGATION BAR -->
   <div class="navbar">
-    <a href="#" class="active">Home</a>
-    <a href="#">Services</a>
-    <a href="#">Admin</a>
-    <a href="#">Military</a>
-    <a href="#">Report</a>
+    <a href="{{ url_for('home') }}" class="active">Home</a>
+    <a href="{{ url_for('services') }}">Services</a>
+    <a href="{{ url_for('admin') }}">Admin</a>
+    <a href="{{ url_for('military') }}">Military</a>
+    <a href="{{ url_for('report') }}">Report</a>
   </div>
 
   <div class="layout">
@@ -414,7 +447,8 @@
       <h1 class="headline">BREAKING NEWS: IMPERIAL FORCES RESTORE ORDER IN THE OUTER RIM</h1>
 
       <div class="media-wrap">
-        <img src="placeholder-broadcast.jpg" alt="Broadcast still placeholder">
+        <!-- STATIC IMAGE LOCATION UPDATED FOR FLASK -->
+        <img src="{{ url_for('static', filename='imgs/stormtroopers.png') }}" alt="Broadcast still placeholder">
         <div class="play-btn"></div>
       </div>
 
@@ -429,34 +463,10 @@
 
     <!-- RIGHT: BOUNTY PANEL -->
     <div class="right-panel">
-      <div class="bounty-title">BOUNTY</div>
+      <div class="bounty-title"><a href="{{ url_for('bounty') }}">BOUNTY &gt;</a></div>
 
       <div class="bounty-frame">
-        <svg viewBox="0 0 220 172" xmlns="http://www.w3.org/2000/svg">
-          <!-- corner brackets -->
-          <path d="M14 6 L4 6 L4 16" stroke="#FFD307" stroke-width="2" fill="none"/>
-          <path d="M206 6 L216 6 L216 16" stroke="#FFD307" stroke-width="2" fill="none"/>
-          <!-- top gold accent line -->
-          <line x1="120" y1="6" x2="212" y2="6" stroke="#FFD307" stroke-width="2"/>
-          <!-- main frame -->
-          <rect x="4" y="4" width="212" height="150" fill="#000" stroke="#D9D9D9" stroke-width="1.5"/>
-          <!-- hazard stripe corner -->
-          <g clip-path="url(#hazardClip)">
-            <rect x="4" y="120" width="34" height="34" fill="#000"/>
-            <g>
-              <line x1="4" y1="154" x2="38" y2="120" stroke="#FFD307" stroke-width="4"/>
-              <line x1="4" y1="144" x2="28" y2="120" stroke="#FFD307" stroke-width="4"/>
-              <line x1="4" y1="134" x2="18" y2="120" stroke="#FFD307" stroke-width="4"/>
-              <line x1="14" y1="154" x2="38" y2="130" stroke="#FFD307" stroke-width="4"/>
-              <line x1="24" y1="154" x2="38" y2="140" stroke="#FFD307" stroke-width="4"/>
-            </g>
-          </g>
-          <defs>
-            <clipPath id="hazardClip">
-              <rect x="4" y="120" width="34" height="34"/>
-            </clipPath>
-          </defs>
-        </svg>
+        <img src="{{ url_for('static', filename='imgs/anakinskywalker.png') }}" alt="Target: Anakin Skywalker">
       </div>
 
       <div class="stat-grid">
@@ -472,12 +482,12 @@
       </div>
 
       <div class="ability-grid">
-        <div class="ability-btn">ABILITY1</div>
-        <div class="ability-btn">ABILITY1</div>
-        <div class="ability-btn">ABILITY1</div>
-        <div class="ability-btn">ABILITY1</div>
-        <div class="ability-btn">ABILITY1</div>
-        <div class="ability-btn">ABILITY1</div>
+        <a href="{{ url_for('bounty') }}" class="ability-btn">TARGETS</a>
+        <a href="{{ url_for('bounty_submit') }}" class="ability-btn">POST BOUNTY</a>
+        <a href="{{ url_for('report') }}" class="ability-btn">REPORT</a>
+        <a href="{{ url_for('volunteer') }}" class="ability-btn">ENLIST</a>
+        <a href="{{ url_for('services') }}" class="ability-btn">SERVICES</a>
+        <a href="{{ url_for('logout') }}" class="ability-btn">LOGOUT</a>
       </div>
     </div>
 
@@ -566,29 +576,42 @@ setInterval(()=>{
   });
 }, 1400);
 
-/* citizen rank table */
-const rankBody = document.getElementById("rankBody");
-for(let i=0;i<6;i++){
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td>NAME</td><td class="dim">61D</td><td class="dim">107</td>`;
-  rankBody.appendChild(tr);
+/* FETCH REAL CITIZEN RANKS FROM FLASK ENDPOINT */
+async function loadRanks() {
+  const rankBody = document.getElementById("rankBody");
+  try {
+    const res = await fetch('/api/users/ranks');
+    const data = await res.json();
+    rankBody.innerHTML = '';
+    data.forEach(u => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${u.username}</td><td class="dim">${u.volunteered}</td><td class="dim">${u.reports}</td>`;
+      rankBody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error('Failed to load ranks:', err);
+  }
 }
+loadRanks();
 
-/* transmissions log */
-const logs = [
-  { time:"17:42", loc:"CORUSCANT", msg:"IMPERIAL SENATE APPROVES NEW SECURITY ACT...[more]", hot:true },
-  { time:"17:42", loc:"TATOOINE", msg:"CITIZEN REPORT LEADS TO ARREST ...[more]", hot:false },
-  { time:"17:42", loc:"CORUSCANT", msg:"JEDI SYMPATHIZER DETAINED FOLLOWING ATTEMPTED SABOTAGE...", hot:true },
-  { time:"17:42", loc:"CORUSCANT", msg:"IMPERIAL SENATE APPROVES NEW SECURITY ACT...[more]", hot:false, faded:true },
-  { time:"17:42", loc:"CORUSCANT", msg:"IMPERIAL SENATE APPROVES NEW SECURITY ACT...[more]", hot:false, faded:true },
-];
-const logList = document.getElementById("logList");
-logs.forEach(l=>{
-  const row = document.createElement("div");
-  row.className = "log-row" + (l.hot ? " hot" : "") + (l.faded ? " faded" : "");
-  row.innerHTML = `<span class="time">${l.time}</span><span class="loc">${l.loc}</span><span class="msg">${l.msg}</span>`;
-  logList.appendChild(row);
-});
+/* FETCH REAL TRANSMISSIONS LOG FROM FLASK ENDPOINT */
+async function loadTransmissions() {
+  const logList = document.getElementById("logList");
+  try {
+    const res = await fetch('/api/reports');
+    const data = await res.json();
+    logList.innerHTML = '';
+    data.slice(0, 5).forEach(r => {
+      const row = document.createElement("div");
+      row.className = "log-row" + (r.status === 'CONFIRMED' ? " hot" : "");
+      row.innerHTML = `<span class="time">${r.timestamp}</span><span class="loc">${r.location}</span><span class="msg">${r.type}: ${r.details || 'No details'}</span>`;
+      logList.appendChild(row);
+    });
+  } catch (err) {
+    console.error('Failed to load transmissions:', err);
+  }
+}
+loadTransmissions();
 </script>
 
 </body>

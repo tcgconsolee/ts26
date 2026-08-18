@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Imperial Terminal — Military Volunteer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --gold: #FFD307; --white: #FFF; --black: #000; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--black); font-family: 'JetBrains Mono', monospace; color: var(--white); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .box { border: 1px solid var(--white); position: relative; padding: 30px; background: #000; width: 100%; max-width: 520px; text-align: center; }
+  .corner { position: absolute; width: 5px; height: 5px; background: var(--gold); }
+  .tl { top:-3px; left:-3px; } .tr { top:-3px; right:-3px; } .bl { bottom:-3px; left:-3px; } .br { bottom:-3px; right:-3px; }
+  h1 { font-size: 16px; color: var(--gold); letter-spacing: 2px; margin-bottom: 10px; }
+  p { font-size: 11px; color: #888; line-height: 1.6; margin-bottom: 24px; }
+  .confirm-btn { width: 100%; background: var(--gold); color: var(--black); border: none; padding: 14px; font-family: inherit; font-size: 12px; font-weight: 800; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; }
+  .back-link { display: block; margin-top: 16px; color: #555; text-decoration: none; font-size: 10px; letter-spacing: 1px; }
+  .back-link:hover { color: var(--white); }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <h1>CIVIL SERVICE ENLISTMENT</h1>
+  <p>By confirming volunteer duty, your citizen profile will be registered for active local security deployment. Service credit will be appended to your Imperial Citizen Rank.</p>
+  <form method="POST" action="{{ url_for('volunteer') }}">
+    <button type="submit" class="confirm-btn">CONFIRM ENLISTMENT</button>
+  </form>
+  <a href="{{ url_for('military') }}" class="back-link">&lt; RETURN TO MILITARY PANEL</a>
+</div>
+</body>
+</html>

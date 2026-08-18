@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Imperial Terminal — Post Bounty</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --gold: #FFD307; --white: #FFF; --black: #000; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--black); font-family: 'JetBrains Mono', monospace; color: var(--white); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .form-box { border: 1px solid var(--gold); position: relative; padding: 24px; background: #000; width: 100%; max-width: 500px; }
+  .corner { position: absolute; width: 5px; height: 5px; background: var(--gold); }
+  .tl { top:-3px; left:-3px; } .tr { top:-3px; right:-3px; } .bl { bottom:-3px; left:-3px; } .br { bottom:-3px; right:-3px; }
+  h2 { font-size: 14px; letter-spacing: 2px; color: var(--gold); margin: 0 0 20px 0; border-bottom: 1px solid #333; padding-bottom: 8px; }
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 10px; color: #757575; margin-bottom: 6px; letter-spacing: 1px; }
+  input, textarea { width: 100%; background: #0a0a0a; border: 1px solid #333; color: var(--gold); font-family: inherit; font-size: 11px; padding: 10px; outline: none; }
+  input:focus, textarea:focus { border-color: var(--gold); }
+  .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+  .submit-btn { flex: 1; background: var(--gold); color: var(--black); border: none; padding: 12px; font-weight: 800; cursor: pointer; letter-spacing: 2px; text-transform: uppercase; }
+  .cancel-btn { background: transparent; color: var(--white); border: 1px solid #333; padding: 12px 16px; text-decoration: none; font-size: 11px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="form-box">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <h2>POST NEW BOUNTY TARGET</h2>
+  <form method="POST" action="{{ url_for('bounty_submit') }}">
+    <div class="field">
+      <label>TARGET NAME / ALIAS</label>
+      <input type="text" name="target_name" required placeholder="e.g. CAL KESTIS">
+    </div>
+    <div class="field">
+      <label>REWARD CREDITS</label>
+      <input type="text" name="reward" required placeholder="e.g. 50,000 CREDITS">
+    </div>
+    <div class="field">
+      <label>DOSSIER / KNOWN OFFENSES</label>
+      <textarea name="description" rows="4" placeholder="Enter last known location, threat level, and primary offenses..."></textarea>
+    </div>
+    <div class="btn-group">
+      <a href="{{ url_for('bounty') }}" class="cancel-btn">CANCEL</a>
+      <button type="submit" class="submit-btn">AUTHORIZE BOUNTY</button>
+    </div>
+  </form>
+</div>
+</body>
+</html>

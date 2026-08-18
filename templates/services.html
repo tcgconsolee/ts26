@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imperial Terminal — Services</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #FFD307;
+    --gold-bright: #FEE141;
+    --gold-dim: rgba(255, 211, 7, 0.15);
+    --gold-mid: rgba(255, 211, 7, 0.4);
+    --white: #FFFFFF;
+    --grey: #D9D9D9;
+    --grey-mid: #757575;
+    --grey-dark: #262626;
+    --black: #000000;
+    --border-dim: rgba(255, 255, 255, 0.52);
+  }
+  
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--black); }
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  .frame {
+    background: var(--black);
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 8px 16px;
+    box-sizing: border-box;
+  }
+
+  /* ===== MAIN GRID LAYOUT ===== */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  /* ===== LEFT PANEL (SYSTEM) ===== */
+  .left-panel {
+    border-right: 1px solid var(--grey-dark);
+    padding-right: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .sys-header {
+    display: flex;
+    justify-content: space-between;
+    color: var(--grey-mid);
+    font-size: 10px;
+    letter-spacing: 1px;
+    border-top: 1px solid #333;
+    padding-top: 4px;
+    margin-bottom: 4px;
+  }
+  .sys-header span:first-child::before { content: "|"; margin-right: 2px; }
+  .clock {
+    color: var(--gold);
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin: 2px 0 6px 0;
+  }
+  .tickrow {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 12px;
+  }
+  .tick {
+    width: 2px;
+    height: 6px;
+    background: #333;
+  }
+  .tick.on { background: var(--gold); }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    font-size: 9px;
+    margin-bottom: 12px;
+    row-gap: 2px;
+  }
+  .meta-grid .label { color: var(--grey-mid); letter-spacing: 0.5px; }
+  .meta-grid .val { color: var(--white); }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    color: var(--white);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .traffic-box {
+    height: 70px;
+    border: 1px solid var(--grey-dark);
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .net-status { margin-bottom: 10px; }
+  .net-status .row1 {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: var(--grey-mid);
+    margin-bottom: 2px;
+  }
+  .net-status .row2 {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+  }
+  .net-status .row2 .state { color: var(--white); }
+  .net-status .row2 .ip { color: var(--grey-mid); }
+  .net-status .row2 .ping { color: var(--white); }
+
+  .memory-box {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 60px;
+    margin-bottom: 12px;
+  }
+  .mbar { flex: 1; background: #2b2b2b; }
+  .mbar.gold { background: var(--gold); }
+
+  .rank-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9px;
+  }
+  .rank-table th {
+    text-align: left;
+    color: var(--grey-mid);
+    font-weight: 400;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--grey-dark);
+  }
+  .rank-table td { padding: 3px 0; color: var(--white); }
+  .rank-table td.dim { color: var(--grey-mid); }
+
+  /* ===== RIGHT MAIN CONTENT AREA ===== */
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  /* ===== TOP NAVBAR ===== */
+  .navbar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    border-bottom: 1px solid #2a2a2a;
+  }
+  .navbar a {
+    color: var(--white);
+    text-decoration: none;
+    text-align: center;
+    padding: 6px 0;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+    clip-path: polygon(6% 0%, 100% 0%, 94% 100%, 0% 100%);
+    margin-right: -1px;
+  }
+  .navbar a.active {
+    background: var(--white);
+    color: var(--black);
+    font-weight: 700;
+    z-index: 2;
+  }
+
+  /* ===== SERVICES MODULE GRID ===== */
+  .services-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 12px;
+    height: 560px;
+  }
+
+  /* PANEL BOX COMMON */
+  .service-card {
+    border: 1px solid var(--border-dim);
+    background: #000;
+    padding: 12px 14px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .card-header .title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-header .num {
+    color: var(--gold);
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .card-header .title {
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .card-header .sys-id {
+    color: var(--gold);
+    font-size: 9px;
+  }
+
+  .corner-dot {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: var(--gold);
+    z-index: 4;
+  }
+  .corner-tl { top: 2px; left: 2px; }
+  .corner-tr { top: 2px; right: 2px; }
+  .corner-bl { bottom: 2px; left: 2px; }
+  .corner-br { bottom: 2px; right: 2px; }
+
+  /* CARD 01: CITIZENSHIP IDENTIFICATION */
+  .citizen-body {
+    display: grid;
+    grid-template-columns: 1fr 140px;
+    gap: 12px;
+    align-items: center;
+  }
+  .info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .info-item .lbl {
+    font-size: 7px;
+    color: var(--grey-mid);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .info-item .val {
+    font-size: 10px;
+    color: var(--white);
+    letter-spacing: 0.5px;
+    border-bottom: 1px dashed #333;
+    padding-bottom: 2px;
+    text-transform: uppercase;
+  }
+  .info-item .status-verified {
+    color: var(--gold);
+    font-size: 9px;
+    text-transform: uppercase;
+  }
+
+  .avatar-box {
+    width: 140px;
+    height: 140px;
+    border: 1px solid var(--gold);
+    background: #000;
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .citizen-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .btn-outline {
+    border: 1px dashed var(--gold);
+    background: transparent;
+    color: var(--gold);
+    padding: 6px 0;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: inherit;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+  }
+  .btn-outline:hover {
+    background: var(--gold);
+    color: var(--black);
+  }
+  .btn-solid-dark {
+    border: 1px solid #333;
+    background: #111;
+    color: var(--white);
+    padding: 6px 0;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: inherit;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  /* CARD 02: PLANET REGISTRATION */
+  .planet-body {
+    display: grid;
+    grid-template-columns: 1fr 140px;
+    gap: 12px;
+    align-items: center;
+  }
+  .topography-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .topography-label {
+    position: absolute;
+    top: -16px;
+    left: 0;
+    color: var(--gold);
+    font-size: 8px;
+    letter-spacing: 0.5px;
+  }
+  .topo-img-wrap {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    border: 1px solid var(--border-dim);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .topo-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  /* CARD 03: IMPERIAL TRAVEL PERMIT */
+  .permit-route {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .route-box {
+    border: 1px solid #333;
+    padding: 6px 8px;
+  }
+  .route-box .lbl {
+    font-size: 7.5px;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+  }
+  .route-box .val {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--white);
+    margin-top: 2px;
+    text-transform: uppercase;
+  }
+  .permit-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    font-size: 8px;
+    margin-bottom: 8px;
+  }
+
+  /* CARD 04: REPORT DISTURBANCE */
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .form-label {
+    font-size: 7.5px;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .input-select, .input-text, .textarea {
+    width: 100%;
+    background: #000;
+    border: 1px solid #333;
+    color: var(--white);
+    font-family: inherit;
+    font-size: 9px;
+    padding: 4px 6px;
+    outline: none;
+  }
+  .severity-bar-container {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    margin-top: 4px;
+  }
+  .sev-tick {
+    flex: 1;
+    height: 8px;
+    background: #2b2b2b;
+  }
+  .sev-tick.on { background: var(--gold); }
+  .sev-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 6px;
+    color: var(--grey-mid);
+    margin-top: 1px;
+  }
+
+  .time-inputs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+  .time-box {
+    border: 1px solid #333;
+    background: #000;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    color: var(--grey-mid);
+  }
+
+  .textarea {
+    height: 40px;
+    resize: none;
+  }
+
+  @media (max-width: 1100px) {
+    body { overflow-y: auto; }
+    .layout { grid-template-columns: 1fr; }
+    .left-panel { border-right: none; border-bottom: 1px solid var(--grey-dark); padding-right: 0; padding-bottom: 16px; }
+    .services-grid { grid-template-columns: 1fr; height: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="layout">
+
+    <!-- LEFT PANEL: SYSTEM -->
+    <div class="left-panel">
+      <div>
+        <div class="sys-header">
+          <span>SYSTEM</span>
+          <span>PANEL</span>
+        </div>
+        <div class="clock" id="live-time">10 : 27 : 59</div>
+        <div class="tickrow" id="tickrow"></div>
+
+        <div class="meta-grid">
+          <div class="label">DATE</div>
+          <div class="label">UPTIME</div>
+          <div class="label">TYPE</div>
+          <div class="label">POWER</div>
+          <div class="val">{{ system.date if system and system.date else '17SEP' }}</div>
+          <div class="val">{{ system.uptime if system and system.uptime else '09d36:00' }}</div>
+          <div class="val">{{ system.type if system and system.type else 'HNET' }}</div>
+          <div class="val">{{ system.power if system and system.power else 'ON' }}</div>
+        </div>
+
+        <div class="section-label">NETWORK TRAFFIC</div>
+        <div class="traffic-box">
+          <canvas id="trafficCanvas" style="width:100%;height:100%;display:block;"></canvas>
+        </div>
+
+        <div class="net-status">
+          <div class="row1">
+            <span>NETWORK STATUS</span>
+            <span>[Interface: {{ system.net_interface if system and system.net_interface else 'wlp4L' }}]</span>
+          </div>
+          <div class="row2">
+            <span class="state">STATE<br><span style="color:var(--white)">{{ system.net_state if system and system.net_state else 'ACTIVE' }}</span></span>
+            <span class="ip">IP<br>{{ system.ip if system and system.ip else '--' }}</span>
+            <span class="ping">PING<br>{{ system.ping if system and system.ping else '482ms' }}</span>
+          </div>
+        </div>
+
+        <div class="section-label">MEMORY USAGE</div>
+        <div class="memory-box" id="memoryBox"></div>
+      </div>
+
+      <div>
+        <div class="section-label">CITIZEN RANK</div>
+        <table class="rank-table">
+          <thead>
+            <tr><th>NAME</th><th>VOLUNTEERED</th><th>REPORTS</th></tr>
+          </thead>
+          <tbody id="rankBody">
+            {% if citizen_ranks %}
+              {% for rank in citizen_ranks %}
+                <tr>
+                  <td>{{ rank.name }}</td>
+                  <td class="dim">{{ rank.volunteered }}</td>
+                  <td class="dim">{{ rank.reports }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              {% for i in range(5) %}
+                <tr><td>NAME</td><td class="dim">61D</td><td class="dim">107</td></tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: SERVICES -->
+    <div class="main-content">
+      
+      <!-- TOP NAVIGATION -->
+      <div class="navbar">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('services') }}" class="active">Services</a>
+        <a href="{{ url_for('admin') }}">Admin</a>
+        <a href="{{ url_for('military') }}">Military</a>
+        <a href="{{ url_for('report') }}">Report</a>
+      </div>
+
+      <!-- SERVICES 2x2 GRID -->
+      <div class="services-grid">
+        
+        <!-- CARD 01: CITIZENSHIP IDENTIFICATION -->
+        <div class="service-card">
+          <div class="corner-dot corner-tl"></div>
+          <div class="corner-dot corner-tr"></div>
+          <div class="corner-dot corner-bl"></div>
+          <div class="corner-dot corner-br"></div>
+          
+          <div>
+            <div class="card-header">
+              <div class="title-group">
+                <span class="num">01</span>
+                <span class="title">CITIZENSHIP IDENTIFICATION</span>
+              </div>
+              <span class="sys-id">SYS01</span>
+            </div>
+
+            <div class="citizen-body">
+              <div class="info-group">
+                <div class="info-item">
+                  <div class="lbl">CITIZEN ID</div>
+                  <div class="val">{{ citizen.id if citizen and citizen.id else '77-04-19-5832' }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="lbl">NAME</div>
+                  <div class="val">{{ citizen.name if citizen and citizen.name else 'CONSOLEE' }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="lbl">HOMEWORLD</div>
+                  <div class="val">{{ citizen.homeworld if citizen and citizen.homeworld else 'TATOOINE' }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="lbl">CITIZENSHIP STATUS</div>
+                  <div class="status-verified">• {{ citizen.status if citizen and citizen.status else 'VERIFIED' }}</div>
+                </div>
+              </div>
+
+              <!-- AVATAR IMAGE -->
+              <div class="avatar-box">
+                <img src="{{ citizen.avatar_url if citizen and citizen.avatar_url else url_for('static', filename='imgs/user.png') }}" alt="Citizen Avatar">
+              </div>
+            </div>
+          </div>
+
+          <div class="citizen-actions">
+            <button class="btn-outline">VERIFY &gt;</button>
+            <button class="btn-solid-dark">UPDATE RECORDS</button>
+          </div>
+        </div>
+
+        <!-- CARD 02: PLANET REGISTRATION -->
+        <div class="service-card">
+          <div class="corner-dot corner-tl"></div>
+          <div class="corner-dot corner-tr"></div>
+          <div class="corner-dot corner-bl"></div>
+          <div class="corner-dot corner-br"></div>
+
+          <div>
+            <div class="card-header">
+              <div class="title-group">
+                <span class="num">02</span>
+                <span class="title">PLANET REGISTRATION</span>
+              </div>
+              <span class="sys-id">SYS02</span>
+            </div>
+
+            <div class="planet-body">
+              <div class="info-group">
+                <div class="info-item">
+                  <div class="lbl">PLANET NAME</div>
+                  <div class="val">{{ planet.name if planet and planet.name else 'TATOOINE' }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="lbl">SECTOR</div>
+                  <div class="val">{{ planet.sector if planet and planet.sector else 'ARKANIS' }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="lbl">GOVERNORATE</div>
+                  <div class="val">{{ planet.governorate if planet and planet.governorate else 'OUTER RIM' }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="lbl">POPULATION</div>
+                  <div class="val">{{ planet.population if planet and planet.population else '200,000' }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="lbl">REGISTRY ID</div>
+                  <div class="val">{{ planet.registry_id if planet and planet.registry_id else 'REG-8821-TAT' }}</div>
+                </div>
+              </div>
+
+              <!-- TOPOGRAPHY PLANET IMAGE -->
+              <div class="topography-container">
+                <div class="topography-label">TOPOGRAPHY</div>
+                <div class="topo-img-wrap">
+                  <img src="{{ planet.topo_url if planet and planet.topo_url else url_for('static', filename='imgs/topo.png') }}" alt="Planet Topography">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 03: IMPERIAL TRAVEL PERMIT -->
+        <div class="service-card">
+          <div class="corner-dot corner-tl"></div>
+          <div class="corner-dot corner-tr"></div>
+          <div class="corner-dot corner-bl"></div>
+          <div class="corner-dot corner-br"></div>
+
+          <div>
+            <div class="card-header">
+              <div class="title-group">
+                <span class="num">03</span>
+                <span class="title">IMPERIAL TRAVEL PERMIT</span>
+              </div>
+              <span class="sys-id">SYS03</span>
+            </div>
+
+            <div class="permit-route">
+              <div class="route-box">
+                <div class="lbl">FROM</div>
+                <div class="val">{{ permit.from_loc if permit and permit.from_loc else 'TATOOINE' }}</div>
+              </div>
+              <div class="route-box">
+                <div class="lbl">TO</div>
+                <div class="val">{{ permit.to_loc if permit and permit.to_loc else 'NABOO' }}</div>
+              </div>
+            </div>
+
+            <div class="permit-details">
+              <div>
+                <div class="info-item">
+                  <div class="lbl">TRAVELER</div>
+                  <div class="val" style="border:none;">{{ permit.traveler if permit and permit.traveler else 'CONSOLEE' }}</div>
+                </div>
+                <div class="info-item" style="margin-top:4px;">
+                  <div class="lbl">CITIZEN ID</div>
+                  <div class="val" style="border:none;">{{ permit.citizen_id if permit and permit.citizen_id else '77-04-19-5832' }}</div>
+                </div>
+                <div class="info-item" style="margin-top:4px;">
+                  <div class="lbl">PURPOSE OF VISIT</div>
+                  <div class="val" style="border:none;">{{ permit.purpose if permit and permit.purpose else 'TS 26 :FEAR' }}</div>
+                </div>
+              </div>
+
+              <div>
+                <div class="info-item">
+                  <div class="lbl">PERMIT TYPE</div>
+                  <div class="val" style="border:none;">{{ permit.type if permit and permit.type else 'IMPERIAL' }}</div>
+                </div>
+                <div class="info-item" style="margin-top:4px;">
+                  <div class="lbl">CLEARANCE LEVEL</div>
+                  <div class="val" style="border:none;">{{ permit.clearance if permit and permit.clearance else '03' }}</div>
+                </div>
+                <div class="info-item" style="margin-top:4px;">
+                  <div class="lbl">VALID TILL</div>
+                  <div class="val" style="border:none;">{{ permit.valid_till if permit and permit.valid_till else '19 AUG 2026' }}</div>
+                </div>
+                <div class="info-item" style="margin-top:4px;">
+                  <div class="lbl">CURRENT STATUS</div>
+                  <div class="status-verified">• {{ permit.status if permit and permit.status else 'APPROVED' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-outline" style="width:100%;">REQUEST PERMIT</button>
+        </div>
+
+        <!-- CARD 04: REPORT DISTURBANCE -->
+        <div class="service-card">
+          <div class="corner-dot corner-tl"></div>
+          <div class="corner-dot corner-tr"></div>
+          <div class="corner-dot corner-bl"></div>
+          <div class="corner-dot corner-br"></div>
+
+          <form action="{{ url_for('report') }}" method="POST">
+            <div>
+              <div class="card-header">
+                <div class="title-group">
+                  <span class="num">04</span>
+                  <span class="title">REPORT DISTURBANCE</span>
+                </div>
+                <span class="sys-id">SYS04</span>
+              </div>
+
+              <div class="form-group">
+                <div class="form-row-2">
+                  <div>
+                    <div class="form-label">INCIDENT TYPE</div>
+                    <select name="incident_type" class="input-select">
+                      <option value="Civil Unrest">Civil Unrest</option>
+                      <option value="Infiltration">Infiltration</option>
+                      <option value="Contraband">Contraband</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div class="form-label">SEVERITY</div>
+                    <div class="severity-bar-container" id="sevTicks"></div>
+                    <div class="sev-labels">
+                      <span>LOW</span>
+                      <span>MEDIUM</span>
+                      <span>HIGH</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-row-2">
+                  <div>
+                    <div class="form-label">LOCATION</div>
+                    <input type="text" name="location" class="input-text">
+                  </div>
+                  <div>
+                    <div class="form-label">TIME</div>
+                    <div class="time-inputs">
+                      <div class="time-box">DAY</div>
+                      <div class="time-box">HRS</div>
+                      <div class="time-box">MIN</div>
+                      <div class="time-box">SEC</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="form-label">DESCRIPTION</div>
+                  <textarea name="description" class="textarea"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-outline" style="width:100%; margin-top:6px;">SUBMIT REPORT</button>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* LIVE CLOCK */
+function updateClock(){
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2,"0");
+  const m = now.getMinutes().toString().padStart(2,"0");
+  const s = now.getSeconds().toString().padStart(2,"0");
+  document.getElementById("live-time").textContent = `${h} : ${m} : ${s}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* TICK ROW */
+const tickrow = document.getElementById("tickrow");
+if(tickrow) {
+  for(let i=0;i<54;i++){
+    const t = document.createElement("div");
+    t.className = "tick" + (i < 10 ? " on" : "");
+    tickrow.appendChild(t);
+  }
+}
+
+/* NETWORK TRAFFIC CHART */
+const trafficCanvas = document.getElementById("trafficCanvas");
+const tctx = trafficCanvas ? trafficCanvas.getContext("2d") : null;
+function resizeTraffic(){
+  if (!trafficCanvas) return;
+  trafficCanvas.width = trafficCanvas.offsetWidth;
+  trafficCanvas.height = trafficCanvas.offsetHeight;
+}
+if (trafficCanvas) {
+  resizeTraffic();
+  let trafficData = Array(24).fill(0).map(()=>Math.random());
+  function drawTraffic(){
+    const w = trafficCanvas.width, h = trafficCanvas.height;
+    tctx.clearRect(0,0,w,h);
+    tctx.strokeStyle = "#1e1e1e";
+    tctx.lineWidth = 1;
+    for(let i=1;i<4;i++){
+      tctx.beginPath();
+      tctx.moveTo(0, (h/4)*i);
+      tctx.lineTo(w, (h/4)*i);
+      tctx.stroke();
+    }
+    for(let i=1;i<6;i++){
+      tctx.beginPath();
+      tctx.moveTo((w/6)*i, 0);
+      tctx.lineTo((w/6)*i, h);
+      tctx.stroke();
+    }
+    trafficData.shift();
+    trafficData.push(Math.random());
+    tctx.beginPath();
+    tctx.strokeStyle = "#FFD307";
+    tctx.lineWidth = 1.5;
+    const step = w/trafficData.length;
+    trafficData.forEach((v,i)=>{
+      const x = i*step;
+      const y = h - (v*h*0.85) - h*0.05;
+      i===0 ? tctx.moveTo(x,y) : tctx.lineTo(x,y);
+    });
+    tctx.stroke();
+    requestAnimationFrame(drawTraffic);
+  }
+  drawTraffic();
+}
+
+/* MEMORY USAGE BARS */
+const memoryBox = document.getElementById("memoryBox");
+if (memoryBox) {
+  const bars = [];
+  for(let i=0;i<36;i++){
+    const b = document.createElement("div");
+    b.className = "mbar" + (Math.random() > 0.75 ? " gold" : "");
+    b.style.height = (10 + Math.random()*90) + "%";
+    memoryBox.appendChild(b);
+    bars.push(b);
+  }
+  setInterval(()=>{
+    bars.forEach(b=>{
+      b.style.height = (10 + Math.random()*90) + "%";
+      b.className = "mbar" + (Math.random() > 0.8 ? " gold" : "");
+    });
+  }, 1400);
+}
+
+/* SEVERITY TICKS */
+const sevTicks = document.getElementById("sevTicks");
+if (sevTicks) {
+  for(let i=0; i<28; i++){
+    const st = document.createElement("div");
+    st.className = "sev-tick" + (i < 18 ? " on" : "");
+    sevTicks.appendChild(st);
+  }
+}
+
+window.addEventListener("resize", ()=>{
+  resizeTraffic();
+});
+</script>
+
+</body>
+</html>

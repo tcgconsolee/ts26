@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Imperial Terminal — Verified Logs</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --gold: #FFD307; --white: #FFF; --grey-dark: #262626; --black: #000; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--black); font-family: 'JetBrains Mono', monospace; color: var(--white); padding: 20px; }
+  .box { border: 1px solid var(--white); position: relative; padding: 16px; background: #000; max-width: 1200px; margin: 0 auto; }
+  .corner { position: absolute; width: 5px; height: 5px; background: var(--gold); }
+  .tl { top:-3px; left:-3px; } .tr { top:-3px; right:-3px; } .bl { bottom:-3px; left:-3px; } .br { bottom:-3px; right:-3px; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+  .header h1 { font-size: 14px; letter-spacing: 2px; margin: 0; color: var(--gold); }
+  .back-btn { color: var(--white); text-decoration: none; font-size: 10px; letter-spacing: 1px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th { text-align: left; color: #757575; font-weight: 400; padding-bottom: 8px; border-bottom: 1px solid var(--grey-dark); }
+  td { padding: 8px 0; border-bottom: 1px solid #111; }
+  .sq { display: inline-block; width: 8px; height: 8px; }
+  .gold { background: var(--gold); } .white { background: var(--white); }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="header">
+    <h1>ALL VERIFIED INCIDENT LOGS</h1>
+    <a href="{{ url_for('report') }}" class="back-btn">&lt; BACK TO REPORT PANEL</a>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 24px;"></th>
+        <th>ID</th>
+        <th>TIMESTAMP</th>
+        <th>LOCATION</th>
+        <th>SECTOR</th>
+        <th>TYPE</th>
+        <th>STATUS</th>
+        <th>DETAILS</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in reports %}
+      <tr>
+        <td><span class="sq {% if r.status == 'CONFIRMED' %}gold{% else %}white{% endif %}"></span></td>
+        <td>#{{ r.id }}</td>
+        <td>{{ r.timestamp }}</td>
+        <td>{{ r.location }}</td>
+        <td>{{ r.sector }}</td>
+        <td>{{ r.incident_type }}</td>
+        <td style="color: {% if r.status == 'CONFIRMED' %}var(--gold){% else %}var(--white){% endif %};">{{ r.status }}</td>
+        <td>{{ r.description or 'N/A' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" style="text-align: center; color: #555; padding: 20px;">NO INCIDENT LOGS FOUND IN DATABASE</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</body>
+</html>
