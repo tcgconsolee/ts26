@@ -38,7 +38,6 @@
     border-radius: 0;
   }
 
-  /* ===== TOP NAV (shared) ===== */
   .navbar {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
@@ -64,7 +63,6 @@
     z-index: 2;
   }
 
-  /* ===== BOUNTY PAGE ===== */
   .bounty-page {
     max-width: 1000px;
     margin: 0 auto;
@@ -235,12 +233,10 @@
 
 <div class="frame">
 
-  <!-- BACKGROUND HERO IMAGE -->
   <div class="hero">
     <img src="{{ target.image_url if target and target.image_url else url_for('static', filename='imgs/anakinskywalker.png') }}" alt="{{ target.name if target else 'Bounty target' }}">
   </div>
 
-  <!-- NAVIGATION BAR -->
   <div class="navbar">
     <a href="{{ url_for('home') }}" class="active">Home</a>
     <a href="{{ url_for('services') }}">Services</a>
@@ -251,7 +247,6 @@
 
   <div class="bounty-page">
 
-    <!-- STAT STRIP -->
     <div class="stat-strip">
       <span class="arrow">&lt;</span>
       <div class="stat-bar">
@@ -265,7 +260,6 @@
     </div>
     <div class="hazard-tag"></div>
 
-    <!-- TARGET NAME -->
     <h1 class="hero-name">
       {% if target and target.name %}
         {{ target.name.replace(' ', '<br>')|safe }}
@@ -274,7 +268,6 @@
       {% endif %}
     </h1>
 
-    <!-- CLAIM/COLLECT BOUNTY ACTION -->
     <a href="{{ url_for('claim_bounty', target_id=target.id) if target and target.id else '#' }}" class="collect-btn">
       <span class="dots"><span></span><span></span><span></span></span>
       <span class="label">COLLECT<br>BOUNTY</span>
