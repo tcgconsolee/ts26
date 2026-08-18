@@ -153,7 +153,8 @@
     overflow: hidden;
     z-index: 0;
   }
-  .hero img {
+  
+  .hero video {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -256,8 +257,12 @@
 <div class="frame">
 
   <!-- BACKGROUND HERO IMAGE -->
+  <!-- BACKGROUND HERO VIDEO -->
   <div class="hero">
-    <img src="{{ target.image_url if target and target.image_url else url_for('static', filename='imgs/anakinskywalker.png') }}" alt="{{ target.name if target else 'Bounty target' }}">
+    <video autoplay muted playsinline preload="auto">
+      <source src="{{ url_for('static', filename='switch.webm') }}" type="video/webm">
+      Your browser does not support the video tag.
+    </video>
   </div>
 
   <!-- NAVIGATION BAR -->
