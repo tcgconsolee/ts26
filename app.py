@@ -1,8 +1,8 @@
 import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from werkzeug.security import check_password_hash
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'imperial-terminal-secret-key-2026'
@@ -56,7 +56,18 @@ with app.app_context():
         admin_user = User(username='admin', role='ADMIN')
         admin_user.set_password('admin123')
         db.session.add(admin_user)
-        db.session.commit()
+
+    if not Bounty.query.get(1):
+        default_bounty = Bounty(
+            id=1,
+            target_name='Anakin Skywalker',
+            reward='100,000 CREDITS',
+            status='ACTIVE',
+            description='Wanted for treason against the Galactic Empire.'
+        )
+        db.session.add(default_bounty)
+
+    db.session.commit()
 
 # ==========================================
 # PAGE ROUTES
@@ -120,8 +131,71 @@ def military():
 def bounty():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    bounties = Bounty.query.filter_by(status='ACTIVE').all()
-    return render_template('bounty.html', bounties=bounties)
+    bounty = Bounty.query.first()
+    
+    # If database is empty, provide a fallback or default ID to avoid crashes
+    if bounty is None:
+        bounty_id = 1
+    else:
+        bounty_id = bounty.id
+    return render_template('bounty.html', bounty=bounty_id)
+
+@app.route('/bounty/verify/<int:bounty_id>', methods=['GET'])
+def verify_bounty_page(bounty_id):
+    # Ensure user is logged in if applicable
+    if 'user_id' not in session:
+        flash('Please login to claim a bounty.', 'error')
+        return redirect(url_for('login'))
+        
+    return render_template('verification.html', bounty_id=bounty_id)
+
+@app.route('/bounty/verify/<int:bounty_id>', methods=['POST'])
+def verify_bounty(bounty_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    password = request.form.get('password')
+    target_input = request.form.get('target_name', '').strip().lower()
+    saber_color = request.form.get('saber_color', '').strip().lower()
+
+    # Password validation
+    if not user or not check_password_hash(user.password_hash, password):
+        flash('AUTHENTICATION FAILED: Incorrect password.', 'error')
+        return redirect(url_for('verify_bounty_page', bounty_id=bounty_id))
+
+    # Target Name Check
+    if saber_color!= 'blue' and saber_color!= 'red':
+        flash('VERIFICATION FAILED: Target identification mismatch.', 'error')
+        return redirect(url_for('verify_bounty_page', bounty_id=bounty_id))
+    if target_input == 'anakin skywalker':
+        # Success path: mark bounty as claimed in database
+        bounty = Bounty.query.get_or_404(bounty_id)
+        bounty.status = 'CLAIMED'
+        db.session.commit()
+
+        flash('BOUNTY CLAIMED SUCCESSFULLY.', 'success')
+        return redirect(url_for('bounty'))
+
+    elif target_input == 'darth vader':
+        if saber_color=='blue':
+            # Success path: mark bounty as claimed in database
+            bounty = Bounty.query.get_or_404(bounty_id)
+            bounty.status = 'CLAIMED'
+            db.session.commit()
+            
+            flash('BOUNTY CLAIMED SUCCESSFULLY.', 'success')
+            return redirect(url_for('bounty'))
+        elif saber_color=='red':
+            return redirect(url_for('darth_vader_event', bounty_id=bounty_id))
+    else:
+        flash('VERIFICATION FAILED: Target identification mismatch.', 'error')
+        return redirect(url_for('verify_bounty_page', bounty_id=bounty_id))
+
+# 3. Placeholder route for the Darth Vader open path
+@app.route('/bounty/darth-vader/<int:bounty_id>')
+def darth_vader_event(bounty_id):
+    return render_template('darth_vader.html')
 
 
 @app.route('/report', methods=['GET', 'POST'])

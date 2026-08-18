@@ -10,6 +10,7 @@
 <style>
   :root {
     --gold: #FFD307;
+    --red: #FF0000;
     --gold-bright: #FEE141;
     --white: #FFFFFF;
     --grey: #D9D9D9;
@@ -79,12 +80,12 @@
     margin-top: 40px;
   }
   .arrow {
-    color: var(--gold);
+    color: var(--red);
     font-size: 26px;
     flex: 0 0 auto;
     padding: 0 14px;
     user-select: none;
-    text-shadow: 0 0 8px rgba(255,211,7,0.6);
+    text-shadow: 0 0 8px rgba(255, 7, 7, 0.6);
   }
   .stat-bar {
     position: relative;
@@ -94,7 +95,7 @@
     background: rgba(10,10,10,0.28);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,211,7,0.35);
+    border: 1px solid rgba(255, 7, 7, 0.35);
     box-shadow: 0 0 0 1px rgba(0,0,0,0.2), 0 8px 30px rgba(0,0,0,0.35);
   }
   .stat-bar::before {
@@ -102,16 +103,16 @@
     position: absolute;
     top: -1px; left: -1px;
     width: 16px; height: 16px;
-    border-top: 2px solid var(--gold);
-    border-left: 2px solid var(--gold);
+    border-top: 2px solid var(--red);
+    border-left: 2px solid var(--red);
   }
   .stat-bar::after {
     content: "";
     position: absolute;
     top: -1px; right: -1px;
     width: 16px; height: 16px;
-    border-top: 2px solid var(--gold);
-    border-right: 2px solid var(--gold);
+    border-top: 2px solid var(--red);
+    border-right: 2px solid var(--red);
   }
   .stat-cell {
     position: relative;
@@ -119,9 +120,9 @@
     padding: 22px 10px;
     font-size: 13px;
     letter-spacing: 1px;
-    color: var(--gold);
+    color: var(--red);
     font-weight: 700;
-    border-right: 1px dashed rgba(255,211,7,0.25);
+    border-right: 1px dashed rgba(255, 7, 7, 0.25);
     text-transform: uppercase;
   }
   .stat-cell:last-child { border-right: none; }
@@ -132,12 +133,12 @@
     height: 16px;
     background: repeating-linear-gradient(
       45deg,
-      var(--gold),
-      var(--gold) 14px,
+      var(--red),
+      var(--red) 14px,
       #000 14px,
       #000 28px
     );
-    box-shadow: 0 0 10px rgba(255,211,7,0.4);
+    box-shadow: 0 0 10px rgba(255, 7, 7, 0.4);
     position: relative;
     z-index: 2;
   }
@@ -164,7 +165,7 @@
     position: fixed;
     left: 32px;
     bottom: 30px;
-    color: var(--gold);
+    color: var(--red);
     font-size: 44px;
     font-weight: 800;
     line-height: 1.05;
@@ -183,7 +184,7 @@
     align-items: center;
     gap: 10px;
     background: rgba(20,16,0,0.85);
-    border: 1px dashed var(--gold);
+    border: 1px dashed var(--red);
     padding: 14px 22px;
     cursor: pointer;
     z-index: 1;
@@ -191,7 +192,7 @@
     transition: background 0.2s ease;
   }
   .collect-btn:hover {
-    background: rgba(255, 211, 7, 0.2);
+    background: rgba(255, 7, 7, 0.2);
   }
   .collect-btn .dots {
     display: flex;
@@ -201,12 +202,12 @@
   .collect-btn .dots span {
     width: 4px;
     height: 4px;
-    background: var(--gold);
+    background: var(--red);
     border-radius: 50%;
     display: block;
   }
   .collect-btn .label {
-    color: var(--gold);
+    color: var(--red);
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 1px;
@@ -218,7 +219,7 @@
     position: absolute;
     width: 14px;
     height: 14px;
-    border-color: var(--gold);
+    border-color: var(--red);
     border-style: solid;
   }
   .collect-btn::before {
@@ -275,10 +276,10 @@
       <span class="arrow">&lt;</span>
       <div class="stat-bar">
         <div class="stat-cell">TARGET</div>
-        <div class="stat-cell">{{ bounty_obj.status if bounty_obj else 'ACTIVE' }}</div>
-        <div class="stat-cell">{{ target.risk_level if target and target.risk_level else 'HIGH RISK' }}</div>
-        <div class="stat-cell">{{ bounty_obj.reward if bounty_obj else '50,000 CREDITS' }}</div>
-        <div class="stat-cell">{{ target.priority if target and target.priority else 'HIGH PRIORITY' }}</div>
+        <div class="stat-cell">ACTIVE</div>
+        <div class="stat-cell">DEATH</div>
+        <div class="stat-cell">∞ CREDITS</div>
+        <div class="stat-cell">HIGHEST PRIORITY</div>
       </div>
       <span class="arrow">&gt;</span>
     </div>
@@ -286,25 +287,8 @@
 
     <!-- TARGET NAME -->
     <h1 class="hero-name">
-      {% if target and target.name %}
-        {{ target.name.replace(' ', '<br>')|safe }}
-      {% else %}
-        ANAKIN<br>SKYWALKER
-      {% endif %}
+        DARTH<br>VADER
     </h1>
-
-    <!-- CLAIM/COLLECT BOUNTY ACTION -->
-    {% if bounty_obj and bounty_obj.status == 'CLAIMED' %}
-      <div class="collect-btn disabled">
-        <span class="dots"><span></span><span></span><span></span></span>
-        <span class="label">BOUNTY<br>COLLECTED</span>
-      </div>
-    {% else %}
-      <a href="{{ url_for('verify_bounty_page', bounty_id=bounty) }}" class="collect-btn">
-        <span class="dots"><span></span><span></span><span></span></span>
-        <span class="label">COLLECT<br>BOUNTY</span>
-      </a>
-    {% endif %}
 
   </div>
 
