@@ -2,6 +2,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from '/static/js/vendor/OrbitControls.js'
 import { initXR } from '/static/js/galaxy-xr.js'
+import { initHandZoom } from '/static/js/galaxy-handzoom.js'
 
 const wrap = document.getElementById('galaxyWrap')
 const canvas = document.getElementById('galaxyCanvas')
@@ -1264,6 +1265,15 @@ async function init () {
   initXR({ renderer, scene, camera, controls }).catch(err => {
     console.warn('[galaxy-xr] XR init failed:', err)
   })
+
+  // Desktop webcam hand-gesture zoom — full admin map only, not the report picker
+  if (wrap.dataset.mode !== 'picker') {
+    try {
+      initHandZoom({ canvas, controls, camera, renderer, wrap })
+    } catch (err) {
+      console.warn('[galaxy-handzoom] init failed:', err)
+    }
+  }
 
   function loadingFail (msg) {
     const l = document.getElementById('gxLoading')
