@@ -1,10 +1,12 @@
 import os
 import re
+import html
 import json
 import secrets
 import string
 import threading
 import urllib.request
+from urllib.parse import unquote
 from datetime import datetime, timezone
 from functools import wraps
 
@@ -214,13 +216,47 @@ _SQLI_RE = re.compile('|'.join(f'(?:{p})' for p in _SQLI_PATTERNS),
                       re.IGNORECASE | re.DOTALL)
 
 
+def _normalize_for_detection(value: str) -> str:
+    """
+    Undo the common obfuscations an attacker uses to slip a payload past a
+    signature WAF, so the honeypot still recognises it:
+      · peel up to two layers of URL-encoding  (%27 , double-encoded %2527)
+      · decode HTML entities                   (&#39;  &lt;)
+      · strip SQL inline block comments         (UN/**/ION  ->  UNION)
+      · collapse all whitespace (tabs/newlines) to single spaces
+    Matching itself is already case-insensitive.
+    """
+    s = value
+    for _ in range(2):
+        if '%' not in s:
+            break
+        try:
+            dec = unquote(s)
+        except Exception:
+            break
+        if dec == s:
+            break
+        s = dec
+    try:
+        s = html.unescape(s)
+    except Exception:
+        pass
+    s = re.sub(r'/\*.*?\*/', ' ', s, flags=re.DOTALL)   # UN/**/ION -> UN ION
+    s = s.replace('/**/', ' ')
+    s = re.sub(r'\s+', ' ', s)
+    return s
+
+
 def _detect_injection(*values):
     """
     Return the first offending value if any submitted field looks like an
-    injection / SQL-tampering attempt, else None.
+    injection attempt — checked both raw and after de-obfuscation so that
+    encoded / comment-broken payloads that evade the edge WAF are still caught.
     """
     for v in values:
-        if v and _SQLI_RE.search(v):
+        if not v:
+            continue
+        if _SQLI_RE.search(v) or _SQLI_RE.search(_normalize_for_detection(v)):
             return v
     return None
 
