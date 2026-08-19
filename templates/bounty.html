@@ -297,14 +297,14 @@
 
     <!-- CLAIM/COLLECT BOUNTY ACTION -->
     {% if bounty_obj and bounty_obj.status == 'CLAIMED' %}
-      <div class="collect-btn disabled">
+      <div class="collect-btn disabled" id="collectBtn">
         <span class="dots"><span></span><span></span><span></span></span>
-        <span class="label">BOUNTY<br>COLLECTED</span>
+        <span class="label" id="collectLabel">BOUNTY<br>COLLECTED</span>
       </div>
     {% else %}
-      <a href="{{ url_for('verify_bounty_page', bounty_id=bounty) }}" class="collect-btn">
+      <a href="{{ url_for('verify_bounty_page', bounty_id=bounty) }}" class="collect-btn" id="collectBtn">
         <span class="dots"><span></span><span></span><span></span></span>
-        <span class="label">COLLECT<br>BOUNTY</span>
+        <span class="label" id="collectLabel">COLLECT<br>BOUNTY</span>
       </a>
     {% endif %}
 
@@ -313,5 +313,34 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/crt.js') }}?v=8" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('claimed') === '1') {
+      const label = document.getElementById('collectLabel');
+      const text  = 'BOUNTY\nCLAIMED';
+      const delay = 80;
+      let   i     = 0;
+
+      // Clear existing text and start typewriter
+      label.innerHTML = '';
+
+      const type = () => {
+        if (i < text.length) {
+          const ch = text[i];
+          label.innerHTML += ch === '\n' ? '<br>' : ch;
+          i++;
+          setTimeout(type, delay);
+        }
+        // text fully typed — stays for 1s then nothing (it stays permanently)
+      };
+
+      setTimeout(type, 300);
+
+      // Clean the URL so refreshing doesn't re-trigger the effect
+      history.replaceState(null, '', window.location.pathname);
+    }
+  });
+</script>
 </body>
 </html>

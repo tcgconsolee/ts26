@@ -152,6 +152,7 @@
     background: #050505;
     overflow: hidden;
     z-index: 0;
+    cursor: default;
   }
   
   .hero video {
@@ -175,6 +176,7 @@
     margin: 0;
     z-index: 1;
     text-transform: uppercase;
+    pointer-events: none;
   }
 
   .collect-btn {
@@ -258,10 +260,9 @@
 
 <div class="frame">
 
-  <!-- BACKGROUND HERO IMAGE -->
   <!-- BACKGROUND HERO VIDEO -->
-  <div class="hero">
-    <video autoplay muted playsinline preload="auto">
+  <div class="hero" id="heroContainer">
+    <video id="heroVideo" muted playsinline preload="auto">
       <source src="{{ url_for('static', filename='switch.webm') }}" type="video/webm">
       Your browser does not support the video tag.
     </video>
@@ -302,5 +303,77 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/crt.js') }}?v=8" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const heroVideo = document.getElementById('heroVideo');
+
+    const FPS        = 24;
+    const START_TIME = 3  / FPS;  // frame 3  → 0.125s
+    const PAUSE_TIME = 60 / FPS;  // frame 60 → 2.500s
+
+    heroVideo.playbackRate = 1.0;
+
+    // ── state ──────────────────────────────────────────────
+    // 'init'    : not yet started
+    // 'playing' : playing, will pause at frame 60
+    // 'held'    : paused at frame 60, waiting for two clicks
+    // 'free'    : two clicks received, play to end uninterrupted
+    let state      = 'init';
+    let clickCount = 0;
+
+    // ── start playback from frame 3 ───────────────────────
+    function startPlayback() {
+      if (state !== 'init') return;
+      state = 'playing';
+      heroVideo.currentTime = START_TIME;
+      heroVideo.play().catch(err => {
+        // Autoplay blocked — wait for first click on the page
+        state = 'init';
+        console.warn('Autoplay blocked, waiting for click:', err);
+      });
+    }
+
+    heroVideo.addEventListener('loadedmetadata', startPlayback);
+
+    // If metadata already loaded (cached), kick off immediately
+    if (heroVideo.readyState >= 1) startPlayback();
+
+    // Fallback: first click anywhere starts playback if autoplay was blocked
+    document.addEventListener('click', function startOnClick() {
+      if (state === 'init') {
+        startPlayback();
+      }
+      document.removeEventListener('click', startOnClick);
+    }, { once: true });
+
+    // ── pause at frame 60 (only on first pass) ─────────────
+    heroVideo.addEventListener('timeupdate', () => {
+      if (state === 'playing' && heroVideo.currentTime >= PAUSE_TIME) {
+        heroVideo.pause();
+        state      = 'held';
+        clickCount = 0;
+      }
+    });
+
+    // ── redirect when video ends ───────────────────────────
+    heroVideo.addEventListener('ended', () => {
+      window.open('https://ts26dusri.onrender.com/', '_blank');
+    });
+
+    // ── two clicks anywhere to resume to end ──────────────
+    const UI_SELECTORS = '.navbar a, .collect-btn';
+
+    document.addEventListener('click', (e) => {
+      if (state !== 'held') return;
+      if (e.target.closest(UI_SELECTORS)) return;
+
+      clickCount++;
+      if (clickCount >= 2) {
+        state = 'free';
+        heroVideo.play().catch(err => console.error('Playback error:', err));
+      }
+    });
+  });
+</script>
 </body>
 </html>
