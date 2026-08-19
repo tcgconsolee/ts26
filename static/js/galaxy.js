@@ -1,6 +1,7 @@
 
 import * as THREE from 'three'
 import { OrbitControls } from '/static/js/vendor/OrbitControls.js'
+import { initXR } from '/static/js/galaxy-xr.js'
 
 const wrap = document.getElementById('galaxyWrap')
 const canvas = document.getElementById('galaxyCanvas')
@@ -68,7 +69,7 @@ async function init () {
     return s * PLANET_SCALE
   }
 
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' })
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', xrCompatible: true })
   renderer.setClearColor(0x000000, 1)
   const DPR = () => Math.min(window.devicePixelRatio || 1, 2)
 
@@ -798,7 +799,12 @@ async function init () {
   setTimeout(() => loading.remove(), 900)
   flyTo(HOME_POS, HOME_TGT, 2.6)
 
-  window.__gx = { renderer, scene, camera, controls, select, deselect, frame, orbitGroup }
+  window.__gx = { renderer, scene, camera, controls, select, deselect, frame, orbitGroup, clock }
+
+  // Boot WebXR support (feature-detects, injects "Enter VR" button if supported)
+  initXR({ renderer, scene, camera, controls }).catch(err => {
+    console.warn('[galaxy-xr] XR init failed:', err)
+  })
 
   function loadingFail (msg) {
     const l = document.getElementById('gxLoading')
