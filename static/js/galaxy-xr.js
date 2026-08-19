@@ -1,32 +1,34 @@
 /**
  * galaxy-xr.js  —  WebXR support for the Imperial Terminal galaxy map.
  *
- * Zoom: both thumbsticks move the camera forward/backward along the
- * headset's gaze direction.  Push stick up = zoom in, pull down = zoom out.
- * Works on either hand.
+ * Zoom: thumbstick Y on either controller dollies the camera.
+ * Push up = zoom in, pull down = zoom out.
+ *
+ * Locomotion uses XRReferenceSpace.getOffsetReferenceSpace() — the only
+ * correct way to move in WebXR. Writing to xrCamera.position is overwritten
+ * by the runtime every frame and does nothing.
  */
 
 import * as THREE from 'three'
 
 // ── constants ──────────────────────────────────────────────────────────────────
-const ZOOM_SPEED    = 12.0   // world-units per second at full deflection
-const ZOOM_DEADZONE = 0.15   // ignore stick values inside this radius (drift)
-const ZOOM_MIN      = 1.2    // closest the camera can get to scene origin
-const ZOOM_MAX      = 340    // furthest allowed (matches OrbitControls.maxDistance)
-const FOVEATION     = 0.5    // 0=quality … 1=perf; 0.5 is Quest's sweet-spot
+const ZOOM_SPEED    = 10.0   // world-units per second at full stick deflection
+const ZOOM_DEADZONE = 0.15   // ignore axes inside this range (stick drift)
+const ZOOM_MIN      = 2      // min distance from origin
+const ZOOM_MAX      = 340    // max distance (matches OrbitControls.maxDistance)
+const FOVEATION     = 0.5
 
 // ── state ──────────────────────────────────────────────────────────────────────
 let _renderer, _scene, _camera, _controls
-let _vrButton  = null
-let _xrActive  = false
-let _session   = null
-let _prevTime  = null
+let _vrButton = null
+let _xrActive = false
+let _session  = null
+let _prevTime = null
 
-// The "base pose" offset we apply each frame to simulate movement.
-// We accumulate dolly into this Vector3 and pass it to
-// renderer.xr.getCamera().position (which Three.js exposes as the XR camera
-// group's position when renderer.xr.enabled = true).
-let _offset = new THREE.Vector3()
+// Accumulated dolly offset in the reference space coordinate frame.
+// We store it ourselves because getOffsetReferenceSpace is cumulative —
+// we need to track where we are to apply incremental steps.
+let _dollyOffset = new THREE.Vector3()
 
 // ── public init ────────────────────────────────────────────────────────────────
 export async function initXR ({ renderer, scene, camera, controls }) {
@@ -68,7 +70,7 @@ async function _setupVRButton () {
 
 async function _onVRButtonClick () {
   if (_xrActive) {
-    _session && await _session.end().catch(() => {})
+    if (_session) await _session.end().catch(() => {})
     return
   }
 
@@ -81,7 +83,7 @@ async function _onVRButtonClick () {
     _session  = session
     _xrActive = true
     _prevTime = null
-    _offset.set(0, 0, 0)
+    _dollyOffset.set(0, 0, 0)
 
     if (_vrButton) _vrButton.textContent = '⬡ EXIT VR'
     if (_controls) _controls.enabled = false
@@ -102,12 +104,11 @@ function _onSessionEnd () {
   _xrActive = false
   _session  = null
   _prevTime = null
-  _offset.set(0, 0, 0)
+  _dollyOffset.set(0, 0, 0)
 
   if (_vrButton) _vrButton.textContent = '⬡ ENTER VR'
   if (_controls) _controls.enabled = true
 
-  // Restore the galaxy's original desktop animation loop
   const gx = window.__gx
   if (gx && gx.clock && gx.frame) {
     _renderer.setAnimationLoop(() => gx.frame(gx.clock.getElapsedTime()))
@@ -120,73 +121,87 @@ function _xrFrame (timestamp, frame) {
   const dt  = (_prevTime === null) ? 0 : Math.min(now - _prevTime, 0.1)
   _prevTime = now
 
-  // Keep the galaxy scene animated (rotation, tweens, etc.)
+  // Keep galaxy scene animated
   const gx = window.__gx
-  if (gx && gx.clock && gx.frame) {
-    gx.frame(gx.clock.getElapsedTime())
-  }
+  if (gx && gx.clock && gx.frame) gx.frame(gx.clock.getElapsedTime())
 
-  if (frame && dt > 0) {
-    _applyThumbstickZoom(dt, frame)
-  }
+  if (frame && dt > 0) _applyThumbstickZoom(dt, frame)
 
   _renderer.render(_scene, _camera)
 }
 
-// ── thumbstick zoom ────────────────────────────────────────────────────────────
-/**
- * Quest Touch Plus gamepad layout (each inputSource has its own gamepad):
- *   axes[0] = thumbstick X
- *   axes[1] = thumbstick Y   ← we use this
- *   axes[2] = touchpad X     (unused here)
- *   axes[3] = touchpad Y     (unused here)
- *
- * axes[1]: -1 = stick pushed forward/up, +1 = pulled back/down
- * We invert: forward push → positive zoom (move toward scene).
- *
- * Both controllers are checked; first one outside the deadzone wins.
- */
-function _applyThumbstickZoom (dt, frame) {
-  let stickY = 0
+// ── thumbstick zoom via XRReferenceSpace offset ────────────────────────────────
+//
+// WebXR locomotion 101:
+//   The XR runtime writes the headset pose into the reference space each frame.
+//   You CANNOT move the camera by writing to xrCamera.position — the runtime
+//   overwrites it.  The correct pattern is:
+//
+//     baseRefSpace = renderer.xr.getReferenceSpace()   // set by Three.js
+//     newRefSpace  = baseRefSpace.getOffsetReferenceSpace(
+//                      new XRRigidTransform({ x, y, z, w:1 }, { x,y,z,w:1 })
+//                    )
+//     renderer.xr.setReferenceSpace(newRefSpace)
+//
+//   getOffsetReferenceSpace applies a FIXED offset to the base space.
+//   To dolly incrementally we accumulate the total offset ourselves
+//   (_dollyOffset) and rebuild the offset reference space from scratch
+//   each frame — otherwise the offsets compound incorrectly.
 
+function _applyThumbstickZoom (dt, frame) {
+  // ── 1. Read thumbstick Y from any connected controller ────────────────────
+  let stickY = 0
   for (const src of frame.session.inputSources) {
     const gp = src.gamepad
     if (!gp || !gp.axes || gp.axes.length < 2) continue
+    // axes[1] = thumbstick Y on Quest Touch Plus (per-source gamepad)
+    // -1 = pushed forward/up, +1 = pulled back/down
     const y = gp.axes[1]
     if (Math.abs(y) > ZOOM_DEADZONE) {
       stickY = y
-      break   // first active stick wins
+      break
     }
   }
-
   if (stickY === 0) return
 
-  // -stickY: forward push (negative axis) becomes positive (zoom in)
-  const direction = -stickY
+  // ── 2. Work out move direction and distance ───────────────────────────────
+  // Negate: forward push (axes[1] = -1) → positive zoom-in direction
+  const zoomSign = -stickY > 0 ? 1 : -1
+  const magnitude = (Math.abs(stickY) - ZOOM_DEADZONE) / (1 - ZOOM_DEADZONE) // remap to 0-1
+  const step = ZOOM_SPEED * magnitude * dt
 
-  // Get the XR camera group that Three.js manages
+  // ── 3. Get headset forward direction (ignore pitch, move horizontally) ────
+  // Three.js XR camera represents the headset. Its world quaternion gives us
+  // the viewing direction. We use only the yaw component so we don't fly up
+  // when looking at the sky.
   const xrCam = _renderer.xr.getCamera()
-
-  // Current distance from scene origin — used for clamping
-  const dist = xrCam.position.length()
-
-  // How far to move this frame
-  let step = ZOOM_SPEED * Math.abs(direction) * dt
-  if (direction > 0) {
-    // Zoom in — clamp to minimum distance
-    step = Math.min(step, Math.max(0, dist - ZOOM_MIN))
-  } else {
-    // Zoom out — clamp to maximum distance
-    step = Math.min(step, Math.max(0, ZOOM_MAX - dist))
-  }
-
-  if (step <= 0) return
-
-  // Move along the headset's forward axis (camera looks down -Z in camera space)
   const forward = new THREE.Vector3(0, 0, -1)
     .applyQuaternion(xrCam.quaternion)
-    .normalize()
+  forward.y = 0         // lock vertical — pure horizontal dolly
+  if (forward.lengthSq() < 0.0001) forward.set(0, 0, -1)
+  forward.normalize()
 
-  // Apply the movement directly to the XR camera group position
-  xrCam.position.addScaledVector(forward, direction > 0 ? step : -step)
+  // ── 4. Clamp to distance limits ───────────────────────────────────────────
+  const proposed = _dollyOffset.clone().addScaledVector(forward, zoomSign * step)
+  // Approximate camera world position: dolly offset (reference space has origin
+  // near the player's feet at session start, so _dollyOffset ≈ camera movement)
+  const approxDist = proposed.length()
+  if (approxDist < ZOOM_MIN && zoomSign > 0) return  // too close
+  if (approxDist > ZOOM_MAX && zoomSign < 0) return  // too far
+
+  // ── 5. Accumulate offset and rebuild the reference space ──────────────────
+  _dollyOffset.copy(proposed)
+
+  const baseSpace = _renderer.xr.getReferenceSpace()
+  if (!baseSpace) return
+
+  // XRRigidTransform: position moves the origin, so NEGATE the offset
+  // (moving the origin backward shifts the viewer forward).
+  const offsetTransform = new XRRigidTransform(
+    { x: -_dollyOffset.x, y: 0, z: -_dollyOffset.z, w: 1 },
+    { x: 0, y: 0, z: 0, w: 1 }   // no rotation
+  )
+
+  const newRefSpace = baseSpace.getOffsetReferenceSpace(offsetTransform)
+  _renderer.xr.setReferenceSpace(newRefSpace)
 }
