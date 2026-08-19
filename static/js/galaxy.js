@@ -70,6 +70,7 @@ async function init () {
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' })
   renderer.setClearColor(0x000000, 1)
+  renderer.xr.enabled = true
   const DPR = () => Math.min(window.devicePixelRatio || 1, 2)
 
   const scene = new THREE.Scene()
@@ -77,6 +78,9 @@ async function init () {
 
   const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 2000)
   camera.position.set(0, 300, 4)
+  const xrRig = new THREE.Group()
+  xrRig.add(camera)
+  scene.add(xrRig)
 
   const HOME_TGT = new THREE.Vector3(0, 0, 0)
   const HOME_POS = new THREE.Vector3(88, 52, 84)
@@ -95,6 +99,89 @@ async function init () {
   controls.enabled = false
 
   const clock = new THREE.Clock()
+
+  const xrSaved = { pos: new THREE.Vector3(), quat: new THREE.Quaternion(), tgt: new THREE.Vector3() }
+  renderer.xr.addEventListener('sessionstart', () => {
+    xrSaved.pos.copy(camera.position)
+    xrSaved.quat.copy(camera.quaternion)
+    xrSaved.tgt.copy(controls.target)
+    controls.enabled = false
+    xrRig.position.set(0, -9.6, 86)
+    xrRig.rotation.set(0, 0, 0)
+  })
+  renderer.xr.addEventListener('sessionend', () => {
+    for (const c of xrCtl) {
+      if (c.userData.grab) { xrRig.attach(c.userData.grab); c.userData.grab = null }
+    }
+    xrRig.position.set(0, 0, 0)
+    xrRig.rotation.set(0, 0, 0)
+    camera.position.copy(xrSaved.pos)
+    camera.quaternion.copy(xrSaved.quat)
+    controls.target.copy(xrSaved.tgt)
+    controls.enabled = true
+  })
+  const xrCtl = []
+  for (let ci = 0; ci < 2; ci++) {
+    const ctl = renderer.xr.getController(ci)
+    ctl.userData.on = false
+    ctl.userData.hover = -1
+    ctl.addEventListener('connected', e => { ctl.userData.on = true; ctl.userData.laser.visible = true; ctl.userData.src = e.data })
+    ctl.addEventListener('disconnected', () => {
+      ctl.userData.on = false
+      ctl.userData.hover = -1
+      ctl.userData.laser.visible = false
+      if (ctl.userData.grab) { xrRig.attach(ctl.userData.grab); ctl.userData.grab = null }
+    })
+    ctl.addEventListener('selectstart', () => {
+      if (ctl.userData.uiHit) pressVRUi(ctl.userData.uiHit)
+      else if (ctl.userData.hover !== -1) {
+        if (ctl.userData.hover === selected) approachSelected()
+        else select(ctl.userData.hover)
+      }
+    })
+    ctl.addEventListener('squeezestart', () => {
+      if (ctl.userData.panelHit) {
+        ctl.userData.grab = ctl.userData.panelHit
+        ctl.attach(ctl.userData.grab)
+      } else {
+        deselect()
+      }
+    })
+    ctl.addEventListener('squeezeend', () => {
+      if (ctl.userData.grab) {
+        xrRig.attach(ctl.userData.grab)
+        ctl.userData.grab = null
+      }
+    })
+    const lg = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)])
+    const laser = new THREE.Line(lg, new THREE.LineBasicMaterial({
+      color: 0xffd307, transparent: true, opacity: 0.45,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    }))
+    laser.scale.z = 60
+    laser.visible = false
+    ctl.add(laser)
+    ctl.userData.laser = laser
+    xrRig.add(ctl)
+    xrCtl.push(ctl)
+  }
+
+  if (navigator.xr && navigator.xr.isSessionSupported) {
+    navigator.xr.isSessionSupported('immersive-vr').then(ok => {
+      if (!ok) return
+      import('/static/js/vendor/VRButton.js').then(m => {
+        const btn = m.VRButton.createButton(renderer)
+        Object.assign(btn.style, {
+          position: 'absolute', left: 'auto', right: '10px', top: 'auto', bottom: '8px',
+          width: 'auto', padding: '8px 10px', borderRadius: '0',
+          border: '1px solid #262626', background: 'rgba(0,0,0,0.78)',
+          color: '#757575', font: "9px 'JetBrains Mono', monospace",
+          letterSpacing: '1.5px', opacity: '1', zIndex: '8'
+        })
+        wrap.appendChild(btn)
+      }).catch(() => {})
+    }).catch(() => {})
+  }
 
   const orbitGroup = new THREE.Group()
   scene.add(orbitGroup)
@@ -562,6 +649,239 @@ async function init () {
     return { txt: 'NONE REPORTED', cls: '' }
   }
 
+  const vrPanel = {}
+  {
+    const cv = document.createElement('canvas')
+    cv.width = 512
+    cv.height = 680
+    vrPanel.ctx = cv.getContext('2d')
+    vrPanel.tex = new THREE.CanvasTexture(cv)
+    vrPanel.tex.colorSpace = THREE.SRGBColorSpace
+    vrPanel.mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.5, 0.66),
+      new THREE.MeshBasicMaterial({ map: vrPanel.tex, transparent: true })
+    )
+    vrPanel.mesh.position.set(0.62, 1.35, -0.85)
+    vrPanel.mesh.rotation.y = -0.4
+    vrPanel.mesh.visible = false
+    vrPanel.mesh.renderOrder = 6
+    xrRig.add(vrPanel.mesh)
+  }
+
+  const drawVRPanel = idx => {
+    const p = DATA[idx]
+    const g = vrPanel.ctx
+    const hot = jediSet.has(idx)
+    const ac = hot ? '#ff5147' : '#ffd307'
+    const mono = s => s + "px 'JetBrains Mono', monospace"
+    g.clearRect(0, 0, 512, 680)
+    g.fillStyle = 'rgba(4, 4, 4, 0.94)'
+    g.fillRect(0, 0, 512, 680)
+    g.strokeStyle = hot ? 'rgba(255, 69, 58, 0.8)' : 'rgba(255, 211, 7, 0.55)'
+    g.lineWidth = 2
+    g.strokeRect(1, 1, 510, 678)
+    g.fillStyle = ac
+    g.fillRect(5, 5, 6, 6)
+    g.fillRect(501, 669, 6, 6)
+    g.fillStyle = '#757575'
+    g.font = mono(15)
+    g.fillText('// SYSTEM RECORD', 24, 44)
+    g.fillStyle = ac
+    g.font = 'bold ' + mono(28)
+    g.fillText(p.n.toUpperCase().slice(0, 26), 24, 84)
+    g.fillStyle = '#9a9a9a'
+    g.font = mono(14)
+    g.fillText('GRID ' + fmtGrid(p) + '   ' + sectorOf(p) + ' - ' + sectorCode(p), 24, 112)
+    const reps = reportsByLoc.get(p.n.toLowerCase()) || []
+    const jedi = jediStatus(p, reps)
+    let y = 154
+    const row = (k, v, vc) => {
+      if (!v) return
+      g.font = mono(15)
+      g.fillStyle = '#757575'
+      g.fillText(k, 24, y)
+      g.fillStyle = vc || '#ffffff'
+      g.fillText(String(v).slice(0, 22), 226, y)
+      y += 30
+    }
+    row('TYPE', kindLabel(p))
+    row('ATMOSPHERE', p.a)
+    row('DIAMETER', p.d ? p.d.toLocaleString('en-US') + ' KM' : '')
+    row('MOONS', p.m)
+    row('STARS', p.st)
+    row('JEDI ACTIVITY', jedi.txt, jedi.cls === 'alert' ? '#ff5147' : jedi.cls === 'warn' ? '#ffe9a8' : '#ffffff')
+    if (reps.length) row('CITIZEN REPORTS', reps.length + ' ON FILE', '#ff5147')
+    y += 10
+    if (p.de) {
+      g.fillStyle = '#757575'
+      g.font = mono(14)
+      g.fillText('ARCHIVE ENTRY', 24, y)
+      y += 26
+      g.fillStyle = '#c9c9c9'
+      g.font = mono(14)
+      const words = p.de.split(' ')
+      let line = ''
+      for (const w of words) {
+        const test = line ? line + ' ' + w : w
+        if (g.measureText(test).width > 464 && line) {
+          g.fillText(line, 24, y)
+          y += 22
+          if (y > 648) { line = '...'; break }
+          line = w
+        } else {
+          line = test
+        }
+      }
+      if (line && y <= 660) g.fillText(line, 24, y)
+    } else {
+      g.fillStyle = '#757575'
+      g.font = mono(14)
+      g.fillText('NO ARCHIVE RECORD ON FILE. SURVEY PENDING.', 24, y)
+    }
+    g.fillStyle = '#555555'
+    g.font = mono(10)
+    const hint = 'TRIGGER PLANET AGAIN: FLY TO IT  ·  GRIP: MOVE PANEL'
+    g.fillText(hint, 256 - g.measureText(hint).width / 2, 664)
+    vrPanel.tex.needsUpdate = true
+  }
+
+  const vrSearch = { q: '', results: [], hover: null }
+  const vrKeys = []
+  {
+    const rows = [
+      ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+      ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+      ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '-'],
+      ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '\'', '.']
+    ]
+    rows.forEach((r, ri) => {
+      const x0 = (512 - (r.length * 46 - 2)) / 2
+      r.forEach((ch, i) => vrKeys.push({ ch, x: x0 + i * 46, y: 352 + ri * 58, w: 44, h: 52 }))
+    })
+    vrKeys.push({ ch: ' ', x: 26, y: 584, w: 230, h: 52, label: 'SPACE' })
+    vrKeys.push({ ch: 'DEL', x: 262, y: 584, w: 110, h: 52 })
+    vrKeys.push({ ch: 'CLR', x: 378, y: 584, w: 110, h: 52 })
+  }
+
+  const vrSearchPanel = {}
+  {
+    const cv = document.createElement('canvas')
+    cv.width = 512
+    cv.height = 680
+    vrSearchPanel.ctx = cv.getContext('2d')
+    vrSearchPanel.tex = new THREE.CanvasTexture(cv)
+    vrSearchPanel.tex.colorSpace = THREE.SRGBColorSpace
+    vrSearchPanel.mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.5, 0.66),
+      new THREE.MeshBasicMaterial({ map: vrSearchPanel.tex, transparent: true })
+    )
+    vrSearchPanel.mesh.position.set(-0.62, 1.35, -0.85)
+    vrSearchPanel.mesh.rotation.y = 0.4
+    vrSearchPanel.mesh.visible = false
+    vrSearchPanel.mesh.renderOrder = 6
+    xrRig.add(vrSearchPanel.mesh)
+  }
+
+  const runVRSearch = () => {
+    const q = vrSearch.q.trim().toLowerCase()
+    const starts = [], contains = []
+    if (q) {
+      for (let i = 0; i < N; i++) {
+        const ix = lowerNames[i].indexOf(q)
+        if (ix === 0) starts.push(i)
+        else if (ix > 0) contains.push(i)
+        if (starts.length >= 5) break
+      }
+    }
+    vrSearch.results = starts.concat(contains).slice(0, 5)
+  }
+
+  const drawVRSearch = () => {
+    const g = vrSearchPanel.ctx
+    const mono = s => s + "px 'JetBrains Mono', monospace"
+    g.clearRect(0, 0, 512, 680)
+    g.fillStyle = 'rgba(4, 4, 4, 0.94)'
+    g.fillRect(0, 0, 512, 680)
+    g.strokeStyle = 'rgba(255, 211, 7, 0.55)'
+    g.lineWidth = 2
+    g.strokeRect(1, 1, 510, 678)
+    g.fillStyle = '#ffd307'
+    g.fillRect(5, 5, 6, 6)
+    g.fillRect(501, 669, 6, 6)
+    g.fillStyle = '#757575'
+    g.font = mono(15)
+    g.fillText('// SEARCH SYSTEM', 24, 40)
+    g.strokeStyle = 'rgba(255, 211, 7, 0.4)'
+    g.lineWidth = 1
+    g.strokeRect(24, 56, 464, 44)
+    g.fillStyle = '#ffd307'
+    g.font = mono(20)
+    g.fillText(vrSearch.q + '_', 36, 85)
+    let y = 124
+    vrSearch.results.forEach((idx, r) => {
+      const hov = vrSearch.hover === 'r' + r
+      if (hov) { g.fillStyle = '#ffd307'; g.fillRect(24, y, 464, 38) }
+      g.fillStyle = hov ? '#000000' : '#ffffff'
+      g.font = mono(16)
+      g.fillText(DATA[idx].n.toUpperCase().slice(0, 24), 34, y + 26)
+      g.fillStyle = hov ? 'rgba(0, 0, 0, 0.6)' : '#757575'
+      g.font = mono(11)
+      g.fillText(sectorOf(DATA[idx]), 366, y + 25)
+      y += 40
+    })
+    if (!vrSearch.results.length && vrSearch.q) {
+      g.fillStyle = '#757575'
+      g.font = mono(14)
+      g.fillText('NO SYSTEMS MATCH', 34, 148)
+    }
+    for (const k of vrKeys) {
+      const hov = vrSearch.hover === 'k' + k.ch
+      if (hov) {
+        g.fillStyle = '#ffd307'
+        g.fillRect(k.x, k.y, k.w, k.h)
+      } else {
+        g.strokeStyle = '#3a3a3a'
+        g.lineWidth = 1
+        g.strokeRect(k.x + 0.5, k.y + 0.5, k.w - 1, k.h - 1)
+      }
+      g.fillStyle = hov ? '#000000' : '#e8e8e8'
+      g.font = mono(16)
+      const label = k.label || k.ch
+      g.fillText(label, k.x + k.w / 2 - g.measureText(label).width / 2, k.y + k.h / 2 + 6)
+    }
+    g.fillStyle = '#555555'
+    g.font = mono(10)
+    const hint = 'HOLD GRIP TO MOVE'
+    g.fillText(hint, 256 - g.measureText(hint).width / 2, 664)
+    vrSearchPanel.tex.needsUpdate = true
+  }
+
+  const vrUiRegion = uv => {
+    const x = uv.x * 512
+    const y = (1 - uv.y) * 680
+    for (let r = 0; r < vrSearch.results.length; r++) {
+      if (y >= 124 + r * 40 && y < 164 + r * 40 && x >= 24 && x <= 488) return { type: 'row', row: r, id: 'r' + r }
+    }
+    for (const k of vrKeys) {
+      if (x >= k.x && x <= k.x + k.w && y >= k.y && y <= k.y + k.h) return { type: 'key', key: k, id: 'k' + k.ch }
+    }
+    return null
+  }
+
+  const pressVRUi = ui => {
+    if (ui.type === 'row') {
+      const idx = vrSearch.results[ui.row]
+      if (idx != null) select(idx)
+      return
+    }
+    const ch = ui.key.ch
+    if (ch === 'DEL') vrSearch.q = vrSearch.q.slice(0, -1)
+    else if (ch === 'CLR') vrSearch.q = ''
+    else if (vrSearch.q.length < 20) vrSearch.q += ch
+    runVRSearch()
+    drawVRSearch()
+  }
+
   const MODE = wrap.dataset.mode === 'picker' ? 'picker' : 'full'
 
   const openPanel = idx => {
@@ -641,12 +961,15 @@ async function init () {
     selectMarker.material.uniforms.uColor.value.set(jediSet.has(idx) ? '#ff453a' : '#ffd307')
     placeMarker(selectMarker, idx)
     openPanel(idx)
+    drawVRPanel(idx)
 
-    const target = new THREE.Vector3(liveX(idx), worldPos[idx].y, liveZ(idx))
-    const dir = camera.position.clone().sub(controls.target).normalize()
-    const dist = Math.max(worldSize[idx] * 4.2, 2.4)
-    const pos = target.clone().add(dir.multiplyScalar(dist)).add(new THREE.Vector3(0, dist * 0.3, 0))
-    flyTo(pos, target, 1.25, true)
+    if (!renderer.xr.isPresenting) {
+      const target = new THREE.Vector3(liveX(idx), worldPos[idx].y, liveZ(idx))
+      const dir = camera.position.clone().sub(controls.target).normalize()
+      const dist = Math.max(worldSize[idx] * 4.2, 2.4)
+      const pos = target.clone().add(dir.multiplyScalar(dist)).add(new THREE.Vector3(0, dist * 0.3, 0))
+      flyTo(pos, target, 1.25, true)
+    }
   }
 
   const deselect = () => {
@@ -654,7 +977,21 @@ async function init () {
     selected = -1
     selectMarker.visible = false
     closePanel()
-    flyTo(HOME_POS, HOME_TGT, 1.4)
+    if (!renderer.xr.isPresenting) flyTo(HOME_POS, HOME_TGT, 1.4)
+  }
+
+  const approachSelected = () => {
+    if (selected === -1 || !renderer.xr.isPresenting) return
+    const target = new THREE.Vector3(liveX(selected), worldPos[selected].y, liveZ(selected))
+    const dir = target.clone().sub(camW).normalize()
+    const standoff = Math.max(worldSize[selected] * 6, 2.5)
+    const delta = target.sub(dir.multiplyScalar(standoff)).sub(camW)
+    vrGlide = {
+      from: xrRig.position.clone(),
+      to: xrRig.position.clone().add(delta),
+      start: clock.getElapsedTime(),
+      dur: 1.2
+    }
   }
   resetBtn.addEventListener('click', () => { selected === -1 ? flyTo(HOME_POS, HOME_TGT, 1.2) : deselect() })
   window.addEventListener('keydown', e => { if (e.key === 'Escape') { deselect(); searchList.classList.remove('open') } })
@@ -749,8 +1086,17 @@ async function init () {
   })
 
   let dimT = 0
+  let lastFrameT = 0
+  let vrGlide = null
   const followPos = new THREE.Vector3()
   const followDelta = new THREE.Vector3()
+  const camW = new THREE.Vector3()
+  const camWQ = new THREE.Quaternion()
+  const rayO = new THREE.Vector3()
+  const rayD = new THREE.Vector3()
+  const xrQ = new THREE.Quaternion()
+  const xrV = new THREE.Vector3()
+  const vrRay = new THREE.Raycaster()
   const frame = t => {
 
     orbitGroup.rotation.y = -t * ORBIT_RATE
@@ -770,26 +1116,139 @@ async function init () {
       mesh.material.opacity = mesh.userData.idx === selected ? 1 : 1 - dimT * 0.82
     }
 
+    camera.getWorldPosition(camW)
+    camera.getWorldQuaternion(camWQ)
+
+    const dt = Math.min(Math.max(t - lastFrameT, 0), 0.05)
+    lastFrameT = t
+
+    if (renderer.xr.isPresenting) {
+      if (!vrSearchPanel.mesh.visible) { vrSearchPanel.mesh.visible = true; drawVRSearch() }
+
+      if (vrGlide) {
+        const gk = Math.min((t - vrGlide.start) / vrGlide.dur, 1)
+        xrRig.position.lerpVectors(vrGlide.from, vrGlide.to, easeInOut(gk))
+        if (gk >= 1) vrGlide = null
+      }
+
+      let fly = 0, flyCtl = null
+      for (const ctl of xrCtl) {
+        const src = ctl.userData.src
+        const gp = src && src.gamepad
+        if (!gp || !ctl.userData.on || gp.axes.length < 2) continue
+        const y1 = gp.axes[1] || 0
+        const y2 = gp.axes.length >= 4 ? (gp.axes[3] || 0) : 0
+        const ay = Math.abs(y2) > Math.abs(y1) ? y2 : y1
+        if (Math.abs(ay) > 0.15 && Math.abs(ay) > Math.abs(fly)) { fly = ay; flyCtl = ctl }
+        if (src.handedness === 'right') {
+          const x1 = gp.axes[0] || 0
+          const x2 = gp.axes.length >= 4 ? (gp.axes[2] || 0) : 0
+          const axv = Math.abs(x2) > Math.abs(x1) ? x2 : x1
+          if (Math.abs(axv) > 0.6 && !ctl.userData.turned) {
+            ctl.userData.turned = true
+            const delta = axv > 0 ? -Math.PI / 6 : Math.PI / 6
+            const cos = Math.cos(delta), sin = Math.sin(delta)
+            const px = xrRig.position.x - camW.x, pz = xrRig.position.z - camW.z
+            xrRig.position.x = camW.x + px * cos + pz * sin
+            xrRig.position.z = camW.z - px * sin + pz * cos
+            xrRig.rotation.y += delta
+          } else if (Math.abs(axv) < 0.3) {
+            ctl.userData.turned = false
+          }
+        }
+      }
+      if (flyCtl) {
+        vrGlide = null
+        flyCtl.getWorldQuaternion(xrQ)
+        rayD.set(0, 0, -1).applyQuaternion(xrQ)
+        xrRig.position.addScaledVector(rayD, -fly * Math.abs(fly) * 26 * dt)
+        if (xrRig.position.length() > 500) xrRig.position.setLength(500)
+      }
+
+      let xrHover = -1
+      let uiHover = null
+      for (const ctl of xrCtl) {
+        if (!ctl.userData.on) { ctl.userData.hover = -1; ctl.userData.uiHit = null; ctl.userData.panelHit = null; continue }
+        if (ctl.userData.grab) {
+          ctl.userData.hover = -1
+          ctl.userData.uiHit = null
+          ctl.userData.panelHit = null
+          ctl.userData.laser.scale.z = 0.2
+          ctl.userData.laser.material.opacity = 0.25
+          continue
+        }
+        ctl.getWorldPosition(rayO)
+        ctl.getWorldQuaternion(xrQ)
+        rayD.set(0, 0, -1).applyQuaternion(xrQ).normalize()
+        vrRay.set(rayO, rayD)
+        let panelMesh = null, panelDist = Infinity, uiRegion = null
+        const sHits = vrSearchPanel.mesh.visible ? vrRay.intersectObject(vrSearchPanel.mesh, false) : []
+        if (sHits.length) {
+          panelMesh = vrSearchPanel.mesh
+          panelDist = sHits[0].distance
+          if (sHits[0].uv) uiRegion = vrUiRegion(sHits[0].uv)
+        }
+        const rHits = vrPanel.mesh.visible ? vrRay.intersectObject(vrPanel.mesh, false) : []
+        if (rHits.length && rHits[0].distance < panelDist) {
+          panelMesh = vrPanel.mesh
+          panelDist = rHits[0].distance
+          uiRegion = null
+        }
+        ctl.userData.panelHit = panelMesh
+        if (panelMesh) {
+          ctl.userData.uiHit = uiRegion
+          ctl.userData.hover = -1
+          ctl.userData.laser.scale.z = panelDist
+          ctl.userData.laser.material.opacity = uiRegion ? 0.9 : 0.55
+          if (uiRegion && !uiHover) uiHover = uiRegion.id
+          continue
+        }
+        ctl.userData.uiHit = null
+        let best = -1, bestT = Infinity
+        for (let i = 0; i < N; i++) {
+          xrV.set(liveX(i), worldPos[i].y, liveZ(i)).sub(rayO)
+          const along = xrV.dot(rayD)
+          if (along < 0.5 || along > 400) continue
+          const perp2 = xrV.lengthSq() - along * along
+          const tol = Math.max(worldSize[i] * 1.6, 0.35 + along * 0.02)
+          if (perp2 < tol * tol && along < bestT) { bestT = along; best = i }
+        }
+        ctl.userData.hover = best
+        ctl.userData.laser.scale.z = best !== -1 ? bestT : 60
+        ctl.userData.laser.material.opacity = best !== -1 ? 0.9 : 0.4
+        if (best !== -1) xrHover = best
+      }
+      if (uiHover !== vrSearch.hover) { vrSearch.hover = uiHover; drawVRSearch() }
+      if (xrHover !== -1 && xrHover !== selected) placeMarker(hoverMarker, xrHover)
+      else if (xrHover === -1) hoverMarker.visible = false
+      vrPanel.mesh.visible = selected !== -1
+    } else {
+      if (vrSearchPanel.mesh.visible) vrSearchPanel.mesh.visible = false
+      vrPanel.mesh.visible = false
+    }
+
     for (const mk of [hoverMarker, selectMarker]) {
       if (!mk.visible || mk.userData.idx < 0) continue
       const i = mk.userData.idx
       mk.position.set(liveX(i), worldPos[i].y, liveZ(i))
-      const dist = mk.position.distanceTo(camera.position)
+      const dist = mk.position.distanceTo(camW)
       mk.scale.setScalar(Math.max(worldSize[i] * 3.2, 26 * dist / pickScale))
-      mk.quaternion.copy(camera.quaternion)
+      mk.quaternion.copy(camWQ)
       mk.material.uniforms.uTime.value = t
     }
 
-    stepTween(t)
+    if (!renderer.xr.isPresenting) {
+      stepTween(t)
 
-    if (selected !== -1 && !tween) {
-      followPos.set(liveX(selected), worldPos[selected].y, liveZ(selected))
-      followDelta.subVectors(followPos, controls.target)
-      controls.target.add(followDelta)
-      camera.position.add(followDelta)
+      if (selected !== -1 && !tween) {
+        followPos.set(liveX(selected), worldPos[selected].y, liveZ(selected))
+        followDelta.subVectors(followPos, controls.target)
+        controls.target.add(followDelta)
+        camera.position.add(followDelta)
+      }
+
+      controls.update()
     }
-
-    controls.update()
     renderer.render(scene, camera)
   }
   renderer.setAnimationLoop(() => frame(clock.getElapsedTime()))

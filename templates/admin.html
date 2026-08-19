@@ -428,8 +428,8 @@ window.addEventListener("resize", ()=>{
 <script type="importmap">
 { "imports": { "three": "{{ url_for('static', filename='js/vendor/three.module.min.js') }}" } }
 </script>
-<script type="module" src="{{ url_for('static', filename='js/galaxy.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/galaxy.js') }}?v=8"></script>
 
-<script src="{{ url_for('static', filename='js/crt.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/crt.js') }}?v=8" defer></script>
 </body>
 </html>
