@@ -12,7 +12,7 @@
  */
 
 const MP_VER = '0.10.14'
-const MP_MODULE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}`
+const MP_MODULE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/vision_bundle.mjs`
 const MP_WASM = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/wasm`
 const MP_MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
 
@@ -166,4 +166,8 @@ export function initHandZoom ({ canvas, controls, camera, renderer, wrap }) {
   }
 
   window.addEventListener('beforeunload', stopStream)
+
+  // Eager auto-start (matches the working /supplies pattern — asks for the
+  // camera on load instead of waiting for a button click).
+  start()
 }
