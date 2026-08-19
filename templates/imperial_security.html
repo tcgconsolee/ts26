@@ -146,12 +146,21 @@
   td.ip    { color: var(--white); font-variant-numeric: tabular-nums; white-space: nowrap; }
   td.ts    { color: var(--grey-mid); white-space: nowrap; font-size: 9px; }
   td.path  { color: #8ecff0; }
-  td.ua    { color: var(--grey-mid); font-size: 9px; max-width: 320px;
+  td.ua    { color: var(--grey-mid); font-size: 9px; max-width: 240px;
              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  td.sess  { color: var(--grey-mid); font-size: 9px; }
-  td.method-get  { color: #4fc46e; }
-  td.method-post { color: #ffe9a8; }
-  td.method-other { color: var(--red); }
+  td.loc   { color: #8ecff0; white-space: nowrap; font-size: 9px; }
+  td.loc .pending { color: var(--grey-mid); font-style: italic; }
+  td.loc .local { color: var(--grey-mid); }
+  td.payload { color: var(--red); font-size: 9px; max-width: 260px;
+               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tr.row-sqli { background: rgba(255, 81, 71, 0.05); }
+  tr.row-sqli:hover { background: rgba(255, 81, 71, 0.1); }
+  .badge {
+    display: inline-block; padding: 2px 6px; font-size: 8px; letter-spacing: 1px;
+    border: 1px solid; white-space: nowrap;
+  }
+  .badge-sqli  { color: var(--red); border-color: rgba(255, 81, 71, 0.5); }
+  .badge-probe { color: var(--grey-mid); border-color: var(--grey-dark); }
 
   /* Empty state */
   .empty {
@@ -234,16 +243,20 @@
   <!-- stat summary -->
   <div class="stat-row">
     <div class="stat-chip">
-      TOTAL PINGS
-      <span>{{ pagination.total }}</span>
+      TOTAL CAPTURES
+      <span>{{ stats.total }}</span>
+    </div>
+    <div class="stat-chip">
+      SQLi LOGIN TRAPS
+      <span style="color:var(--red)">{{ stats.sqli }}</span>
+    </div>
+    <div class="stat-chip">
+      UNIQUE HOSTILE IPs
+      <span>{{ stats.unique_ips }}</span>
     </div>
     <div class="stat-chip">
       PAGE
       <span>{{ page }} / {{ pagination.pages or 1 }}</span>
-    </div>
-    <div class="stat-chip">
-      PER PAGE
-      <span>{{ pagination.per_page }}</span>
     </div>
   </div>
 
@@ -253,27 +266,35 @@
       <thead>
         <tr>
           <th>PING ID</th>
+          <th>THREAT</th>
           <th>IP ADDRESS</th>
+          <th>LOCATION</th>
           <th>TIMESTAMP (UTC)</th>
-          <th>METHOD</th>
           <th>PATH</th>
-          <th>SESSION USER</th>
+          <th>PAYLOAD</th>
           <th>USER AGENT</th>
         </tr>
       </thead>
       <tbody>
         {% for ev in events %}
-        <tr>
+        <tr class="{{ 'row-sqli' if ev.category == 'SQLI_LOGIN' else '' }}">
           <td class="ping">{{ ev.ping_id }}</td>
+          <td class="cat">
+            {% if ev.category == 'SQLI_LOGIN' %}
+              <span class="badge badge-sqli">SQLi LOGIN</span>
+            {% else %}
+              <span class="badge badge-probe">PROBE</span>
+            {% endif %}
+          </td>
           <td class="ip">{{ ev.ip_address }}</td>
+          <td class="loc">
+            {% if ev.location == 'PENDING' %}<span class="pending">resolving…</span>
+            {% elif ev.location == 'LOCAL NETWORK' %}<span class="local">LOCAL NET</span>
+            {% else %}{{ ev.location or '—' }}{% endif %}
+          </td>
           <td class="ts">{{ ev.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-          <td class="
-            {%- if ev.method == 'GET' %} method-get
-            {%- elif ev.method == 'POST' %} method-post
-            {%- else %} method-other
-            {%- endif %}">{{ ev.method }}</td>
           <td class="path">{{ ev.path }}</td>
-          <td class="sess">{{ ev.session_id if ev.session_id else '—' }}</td>
+          <td class="payload" title="{{ ev.payload or '' }}">{{ ev.payload or '—' }}</td>
           <td class="ua" title="{{ ev.user_agent or '' }}">{{ ev.user_agent or '—' }}</td>
         </tr>
         {% endfor %}
@@ -307,8 +328,8 @@
 
   {% else %}
   <div class="empty">
-    <strong>NO EVENTS RECORDED</strong>
-    No requests to /internal have been logged yet.
+    <strong>NO CAPTURES RECORDED</strong>
+    No honeypot traps have fired yet. SQLi login attempts and /internal probes appear here.
   </div>
   {% endif %}
 

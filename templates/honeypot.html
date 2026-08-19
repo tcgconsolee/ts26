@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>root@imperial-db</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/crt.css') }}">
+<style>
+  :root{
+    --green:#39ff8b; --green-dim:#1f7a45; --amber:#ffd307; --red:#ff5147;
+    --bg:#000; --grey:#5b6b60;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);}
+  body{
+    font-family:'JetBrains Mono',monospace;
+    color:var(--green);
+    min-height:100vh;
+    padding:26px 20px 60px;
+    font-size:13px;
+    line-height:1.55;
+  }
+  .term{max-width:900px;margin:0 auto;}
+  .prompt{color:var(--grey);}
+  .prompt b{color:var(--green);font-weight:600;}
+  .ok{color:var(--green);}
+  .warn{color:var(--amber);}
+  .cmd{color:#cfe;}
+  .banner{
+    border:1px solid var(--green-dim);
+    padding:12px 16px;
+    margin:14px 0 20px;
+    background:rgba(20,60,35,.12);
+    white-space:pre;
+    overflow-x:auto;
+    color:var(--green);
+    font-size:12px;
+  }
+  h1{
+    font-size:15px;letter-spacing:1px;margin:0 0 4px;
+    color:var(--amber);font-weight:700;
+  }
+  table{border-collapse:collapse;width:100%;margin:8px 0 18px;font-size:12px;}
+  th,td{border:1px solid var(--green-dim);padding:5px 10px;text-align:left;}
+  th{color:var(--amber);background:rgba(255,211,7,.05);letter-spacing:1px;font-size:10px;}
+  td{color:#bfe;}
+  .blink::after{content:"\2588";animation:bl 1s steps(1) infinite;color:var(--green);}
+  @keyframes bl{50%{opacity:0;}}
+  .line{margin:2px 0;}
+  .hash{color:var(--grey);word-break:break-all;}
+  .muted{color:var(--grey);font-size:11px;}
+</style>
+</head>
+<body>
+<div class="term">
+  <div class="line prompt"><b>root@imperial-db</b>:<span class="cmd">~#</span> mysql -u root -p'********' imperial_terminal</div>
+  <div class="line ok">Welcome to the MariaDB monitor.  Commands end with ; or \g.</div>
+  <div class="line ok">Server version: 10.6.16-Imperial  Coruscant Central Registry</div>
+  <div class="banner">  ██ AUTHENTICATION LAYER BYPASSED ██
+  session token grafted · privilege escalated to SYSADMIN
+  connection: <span id="ipslot">resolving…</span></div>
+
+  <div class="line prompt"><b>MariaDB [imperial_terminal]&gt;</b> <span class="cmd">SELECT username,password_hash,role FROM users;</span></div>
+  <h1>users  (3 rows)</h1>
+  <table>
+    <thead><tr><th>USERNAME</th><th>PASSWORD_HASH</th><th>ROLE</th></tr></thead>
+    <tbody>
+      <tr><td>admin</td><td class="hash">$2b$12$Kx9......[REDACTED — VAULT SEALED]</td><td>ADMIN</td></tr>
+      <tr><td>moff_relk</td><td class="hash">$2b$12$Qz1......[REDACTED — VAULT SEALED]</td><td>MILITARY</td></tr>
+      <tr><td>citizen_0</td><td class="hash">$2b$12$aB7......[REDACTED — VAULT SEALED]</td><td>CITIZEN</td></tr>
+    </tbody>
+  </table>
+
+  <div class="line prompt"><b>MariaDB [imperial_terminal]&gt;</b> <span class="cmd">SELECT * FROM imperial_secrets LIMIT 1;</span></div>
+  <div class="line warn">ERROR 1142 (42000): SELECT command denied — table 'imperial_secrets' is under ISB SIGMA seal.</div>
+  <div class="line muted" style="margin-top:14px">// audit daemon flagged this session · trace dispatched</div>
+  <div class="line prompt" style="margin-top:6px"><b>MariaDB [imperial_terminal]&gt;</b> <span class="blink"></span></div>
+</div>
+
+<script>
+  // Purely cosmetic: makes the trap feel live. No real data is exposed.
+  (function(){
+    fetch('https://api.ipify.org?format=json')
+      .then(r => r.json())
+      .then(d => { document.getElementById('ipslot').textContent = (d.ip || 'unknown') + ' · logged'; })
+      .catch(() => { document.getElementById('ipslot').textContent = 'trace active'; });
+  })();
+</script>
+<script src="{{ url_for('static', filename='js/crt.js') }}?v=8" defer></script>
+</body>
+</html>
